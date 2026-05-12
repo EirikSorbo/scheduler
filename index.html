@@ -88,83 +88,42 @@
             letter-spacing: -0.3px;
         }
 
-        .header-handlinger {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
+        .header-handlinger { display: flex; gap: 12px; align-items: center; }
 
-        .bruker-navn {
-            font-weight: 600;
-            color: var(--tekst);
-            font-size: 0.9em;
-        }
-
-        .bruker-rolle {
-            font-size: 0.8em;
-            color: var(--tekst-sek);
-            text-align: right;
-        }
+        .bruker-navn { font-weight: 600; color: var(--tekst); font-size: 0.9em; }
+        .bruker-rolle { font-size: 0.8em; color: var(--tekst-sek); text-align: right; }
 
         .header-knapp {
-            width: 36px;
-            height: 36px;
+            width: 36px; height: 36px;
             border-radius: 50%;
             border: 1px solid var(--kant);
             background: var(--hvit);
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             color: var(--tekst-sek);
             font-size: 16px;
             transition: all 0.15s;
         }
-
-        .header-knapp:hover {
-            background: var(--primær-lys);
-            color: var(--primær);
-            border-color: var(--primær-mid);
-        }
+        .header-knapp:hover { background: var(--primær-lys); color: var(--primær); border-color: var(--primær-mid); }
 
         /* ── Paneler ── */
         .panel { display: none; }
         .panel.aktiv { display: block; }
 
-        /* ── Main ── */
-        main {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px 12px 64px;
-        }
+        main { max-width: 1000px; margin: 0 auto; padding: 20px 12px 64px; }
 
         /* ── Admin Grid ── */
-        .admin-grid {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 20px;
-        }
+        .admin-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
 
-        .kort {
-            background: var(--hvit);
-            border-radius: var(--r);
-            border: 1px solid var(--kant);
-            overflow: hidden;
-        }
+        .kort { background: var(--hvit); border-radius: var(--r); border: 1px solid var(--kant); overflow: hidden; }
 
-        .kort-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--kant);
-            background: var(--primær-lys);
-        }
+        .kort-header { padding: 16px 20px; border-bottom: 1px solid var(--kant); background: var(--primær-lys); }
 
         .kort-tittel {
             font-family: 'Syne', sans-serif;
-            font-weight: 700;
-            font-size: 14px;
+            font-weight: 700; font-size: 14px;
             color: var(--primær-mørk);
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
+            text-transform: uppercase; letter-spacing: 0.3px;
         }
 
         .møte-liste { display: flex; flex-direction: column; }
@@ -184,88 +143,52 @@
         .møte-meta { font-size: 12px; color: var(--tekst-sek); }
 
         .legg-til-knapp {
-            background: var(--primær);
-            color: white;
-            border: none;
+            background: var(--primær); color: white; border: none;
             border-radius: var(--rs);
             padding: 9px 16px;
-            font-family: 'Syne', sans-serif;
-            font-weight: 700;
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            cursor: pointer;
-            transition: background 0.15s;
-            width: calc(100% - 40px);
-            margin: 12px 20px 20px;
+            font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
+            text-transform: uppercase; letter-spacing: 0.4px;
+            cursor: pointer; transition: background 0.15s;
+            width: calc(100% - 40px); margin: 12px 20px 20px;
         }
         .legg-til-knapp:hover { background: var(--primær-mørk); }
 
-        .tom-melding {
-            padding: 32px 20px;
-            text-align: center;
-            color: var(--tekst-sek);
-            font-size: 14px;
-        }
+        .tom-melding { padding: 32px 20px; text-align: center; color: var(--tekst-sek); font-size: 14px; }
 
         #detaljSection { display: none; }
         #detaljSection.vis { display: block; }
 
         .kort-innhold { padding: 20px; }
 
-        /* ── Skjema ── */
         .form-gruppe { margin-bottom: 20px; }
 
         label {
-            display: block;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--tekst);
-            font-size: 0.95em;
-            font-family: 'Syne', sans-serif;
+            display: block; font-weight: 700; margin-bottom: 8px;
+            color: var(--tekst); font-size: 0.95em; font-family: 'Syne', sans-serif;
         }
 
         input[type="text"], input[type="datetime-local"], textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid var(--kant);
-            border-radius: var(--rs);
-            font-size: 0.95em;
-            font-family: 'Nunito', sans-serif;
+            width: 100%; padding: 10px 12px;
+            border: 2px solid var(--kant); border-radius: var(--rs);
+            font-size: 0.95em; font-family: 'Nunito', sans-serif;
             transition: border-color 0.2s;
         }
-
-        input[type="text"]:focus, input[type="datetime-local"]:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primær);
-            box-shadow: 0 0 0 3px rgba(148, 144, 212, 0.1);
+        input:focus, textarea:focus {
+            outline: none; border-color: var(--primær);
+            box-shadow: 0 0 0 3px rgba(148,144,212,0.1);
         }
-
         textarea { resize: vertical; min-height: 80px; }
 
-        .tider-container {
-            background: var(--primær-lys);
-            padding: 16px;
-            border-radius: var(--rs);
-            margin: 12px 0;
-        }
-
+        .tider-container { background: var(--primær-lys); padding: 16px; border-radius: var(--rs); margin: 12px 0; }
         .tid-slot { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
         .tid-slot:last-child { margin-bottom: 0; }
-        .tid-slot input { flex: 1; margin-bottom: 0; }
+        .tid-slot input { flex: 1; }
 
-        /* ── Knapper ── */
         button {
-            padding: 10px 16px;
-            border: none;
-            border-radius: var(--rs);
-            font-size: 0.95em;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: 'Syne', sans-serif;
+            padding: 10px 16px; border: none; border-radius: var(--rs);
+            font-size: 0.95em; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; font-family: 'Syne', sans-serif;
         }
-
         .btn-primær { background: var(--primær); color: white; }
         .btn-primær:hover { background: var(--primær-mørk); }
         .btn-sekundær { background: var(--kant); color: var(--tekst); }
@@ -277,16 +200,13 @@
         .knapp-gruppe button { flex: 1; min-width: 120px; }
 
         /* ── Resultater ── */
-        .resultater-tabell { width: 100%; border-collapse: collapse; margin: 16px 0; }
+        .resultater-tabell { width: 100%; border-collapse: collapse; margin: 16px 0; overflow-x: auto; display: block; }
         .resultater-tabell th {
-            background: var(--primær-lys);
-            padding: 12px;
-            text-align: left;
-            font-weight: 700;
-            color: var(--primær-mørk);
+            background: var(--primær-lys); padding: 12px; text-align: left;
+            font-weight: 700; color: var(--primær-mørk);
             border-bottom: 2px solid var(--kant);
-            font-family: 'Syne', sans-serif;
-            font-size: 12px;
+            font-family: 'Syne', sans-serif; font-size: 12px;
+            white-space: nowrap;
         }
         .resultater-tabell td { padding: 12px; border-bottom: 1px solid var(--kant); }
         .resultater-tabell tr:hover { background: var(--primær-lys); }
@@ -294,13 +214,10 @@
         .stemme-nei { color: #f87171; font-weight: 700; }
 
         .deling-boks {
-            background: var(--primær-lys);
-            padding: 16px;
-            border-radius: var(--r);
-            margin: 16px 0;
+            background: var(--primær-lys); padding: 16px;
+            border-radius: var(--r); margin: 16px 0;
             border: 2px solid var(--primær-mid);
-            display: flex;
-            gap: 8px;
+            display: flex; gap: 8px;
         }
         .deling-boks input { flex: 1; background: var(--hvit); border: 1px solid var(--kant); }
 
@@ -308,53 +225,37 @@
         .deltaker-container { max-width: 600px; margin: 0 auto; }
 
         .møte-header {
-            background: var(--hvit);
-            padding: 24px;
-            border-radius: var(--r);
-            margin-bottom: 24px;
-            border: 1px solid var(--kant);
-            border-left: 4px solid var(--primær);
+            background: var(--hvit); padding: 24px;
+            border-radius: var(--r); margin-bottom: 24px;
+            border: 1px solid var(--kant); border-left: 4px solid var(--primær);
         }
         .møte-header h2 { color: var(--primær); margin-bottom: 8px; font-family: 'Syne', sans-serif; }
         .møte-header p { color: var(--tekst-sek); font-size: 0.95em; }
 
         .tid-kort {
-            background: var(--hvit);
-            padding: 20px;
-            border-radius: var(--r);
-            margin-bottom: 16px;
-            border: 1px solid var(--kant);
-            border-left: 4px solid var(--primær);
+            background: var(--hvit); padding: 20px;
+            border-radius: var(--r); margin-bottom: 16px;
+            border: 1px solid var(--kant); border-left: 4px solid var(--primær);
         }
-
         .tid-tekst { font-weight: 700; color: var(--tekst); font-size: 1.05em; margin-bottom: 4px; font-family: 'Syne', sans-serif; }
         .tid-stemmer { font-size: 0.9em; color: var(--tekst-sek); margin-bottom: 16px; }
 
         .stemme-knapp-gruppe { display: flex; gap: 8px; }
         .stemme-knapp {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid var(--kant);
-            background: var(--hvit);
-            border-radius: var(--rs);
-            cursor: pointer;
-            font-weight: 700;
-            transition: all 0.2s;
-            font-size: 0.95em;
-            font-family: 'Syne', sans-serif;
+            flex: 1; padding: 12px;
+            border: 2px solid var(--kant); background: var(--hvit);
+            border-radius: var(--rs); cursor: pointer;
+            font-weight: 700; transition: all 0.2s;
+            font-size: 0.95em; font-family: 'Syne', sans-serif;
         }
         .stemme-knapp:hover { border-color: var(--primær); background: var(--primær-lys); }
         .stemme-knapp.valgt { background: var(--primær); color: white; border-color: var(--primær); }
 
         .suksess-melding {
-            background: var(--primær-lys);
-            color: var(--primær-mørk);
-            padding: 16px;
-            border-radius: var(--rs);
-            margin-top: 24px;
-            text-align: center;
-            font-weight: 700;
-            border: 2px solid var(--primær);
+            background: var(--primær-lys); color: var(--primær-mørk);
+            padding: 16px; border-radius: var(--rs);
+            margin-top: 24px; text-align: center;
+            font-weight: 700; border: 2px solid var(--primær);
         }
 
         @media (max-width: 768px) {
@@ -366,7 +267,7 @@
 </head>
 <body>
 
-    <!-- Login Overlay -->
+    <!-- Login Overlay (skjules for deltakere og innloggede admins) -->
     <div id="loginOverlay">
         <svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
             <defs><clipPath id="licp"><circle cx="46" cy="36" r="18"/></clipPath></defs>
@@ -387,7 +288,7 @@
         </button>
     </div>
 
-    <!-- Header (kun admin) -->
+    <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
         <div class="logo">Schedule</div>
         <div class="header-handlinger">
@@ -458,22 +359,25 @@
         const auth = getAuth(app);
         const db   = getFirestore(app);
 
-        let currentUser = null;
+        // ── State ──
+        let currentUser  = null;
         let currentMøteId = null;
-        let møter = {};
+        let møter        = {};
+        let redigeringsModus = false; // skiller mellom visning og redigering
 
-        // Sjekk URL umiddelbart
-        const urlParams = new URLSearchParams(window.location.search);
-        const møteIdFraUrl = urlParams.get('møte');
+        // ── Sjekk URL umiddelbart ──
+        const urlParams     = new URLSearchParams(window.location.search);
+        const møteIdFraUrl  = urlParams.get('møte');
+        const erDeltaker    = !!møteIdFraUrl;
 
-        if (møteIdFraUrl) {
-            // Deltaker-modus: skjul login, vis deltaker-panel
+        if (erDeltaker) {
+            // Deltaker-modus: skjul loginoverlay, vis deltaker-panel
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('deltakerPanel').classList.add('aktiv');
-            visDeltakerPanel(møteIdFraUrl);
+            lastDeltakerPanel(møteIdFraUrl);
         }
 
-        // Auth
+        // ── Auth ──
         window.signIn = async () => {
             try {
                 await signInWithPopup(auth, new GoogleAuthProvider());
@@ -482,27 +386,36 @@
             }
         };
 
-        window.logout = async () => {
-            await signOut(auth);
-        };
+        window.logout = async () => { await signOut(auth); };
 
         onAuthStateChanged(auth, async bruker => {
-            // Ikke forstyrr deltaker-modus
-            if (møteIdFraUrl) return;
+            if (erDeltaker) return; // ikke forstyrr deltaker-modus
 
             if (bruker) {
                 currentUser = bruker;
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('appHeader').style.display = 'flex';
                 document.getElementById('adminPanel').classList.add('aktiv');
-                document.getElementById('deltakerPanel').classList.remove('aktiv');
                 document.getElementById('brukerNavn').textContent = bruker.displayName || bruker.email;
 
-                const q = query(collection(db, 'schedule_møter'), where('uid', '==', bruker.uid));
+                // Lytt på alle møter i sanntid (BUGFIX: unngår å overskrive ny_-møter)
+                const q = query(collection(db, 'schedule_moter'), where('uid', '==', bruker.uid));
                 onSnapshot(q, snapshot => {
-                    møter = {};
-                    snapshot.forEach(d => { møter[d.id] = d.data(); });
+                    snapshot.forEach(d => {
+                        møter[d.id] = d.data();
+                    });
+                    // Fjern møter som er slettet fra Firestore
+                    const firebaseIds = snapshot.docs.map(d => d.id);
+                    Object.keys(møter).forEach(id => {
+                        if (!id.startsWith('ny_') && !firebaseIds.includes(id)) {
+                            delete møter[id];
+                        }
+                    });
                     renderMøteListe();
+                    // Oppdater åpent møte live hvis det er i visning (ikke redigering)
+                    if (currentMøteId && !currentMøteId.startsWith('ny_') && !redigeringsModus) {
+                        renderMøteDetaljer(currentMøteId);
+                    }
                 });
             } else {
                 currentUser = null;
@@ -513,15 +426,16 @@
             }
         });
 
-        // ── Admin funksjoner ──
-
+        // ── Admin: Møteliste ──
         function renderMøteListe() {
             const liste = document.getElementById('møteListe');
-            const ids = Object.keys(møter);
+            const ids = Object.keys(møter).filter(id => !id.startsWith('ny_'));
 
             if (ids.length === 0) {
                 liste.innerHTML = '<div class="tom-melding">Ingen møter ennå</div>';
-                document.getElementById('detaljSection').classList.remove('vis');
+                if (!currentMøteId?.startsWith('ny_')) {
+                    document.getElementById('detaljSection').classList.remove('vis');
+                }
                 return;
             }
 
@@ -538,88 +452,112 @@
 
         window.velgMøte = id => {
             currentMøteId = id;
+            redigeringsModus = false;
             renderMøteListe();
             renderMøteDetaljer(id);
         };
 
+        // ── Admin: Nytt møte ──
         window.opprettNyttMøte = () => {
             currentMøteId = 'ny_' + Date.now();
+            redigeringsModus = true;
             møter[currentMøteId] = { tittel: '', beskrivelse: '', tider: [''], stemmer: {} };
             renderMøteListe();
-            renderMøteDetaljer(currentMøteId);
+            visSkjema(currentMøteId);
         };
 
+        // ── Admin: Vis møtedetaljer (lesemodus) ──
         function renderMøteDetaljer(møteId) {
             const møte = møter[møteId];
+            if (!møte) return;
+
+            document.getElementById('detaljTittel').textContent = møte.tittel;
             document.getElementById('detaljSection').classList.add('vis');
 
-            if (møteId.startsWith('ny_')) {
-                document.getElementById('detaljTittel').textContent = 'Nytt møte';
-                document.getElementById('detaljInnhold').innerHTML = `
-                    <div class="form-gruppe">
-                        <label>Tittel</label>
-                        <input type="text" id="editTittel" placeholder="F.eks. Teammøte" value="${møte.tittel}">
-                    </div>
-                    <div class="form-gruppe">
-                        <label>Beskrivelse (valgfritt)</label>
-                        <textarea id="editBeskrivelse" placeholder="Noen ord om møtet...">${møte.beskrivelse || ''}</textarea>
-                    </div>
-                    <div class="form-gruppe">
-                        <label>Møtetider</label>
-                        <div class="tider-container" id="editTider"></div>
-                        <button class="btn-sekundær" onclick="leggTilTid()" style="width:100%;margin-top:8px;">+ Legg til tid</button>
-                    </div>
-                    <div class="knapp-gruppe">
-                        <button class="btn-primær" onclick="lagreMøte()">Lagre møte</button>
-                        <button class="btn-sekundær" onclick="avbryt()">Avbryt</button>
-                    </div>`;
-                renderEditTider();
+            const link = window.location.origin + window.location.pathname + '?møte=' + møteId;
+
+            const stemmer = møte.stemmer || {};
+            let tabell = '';
+            if (Object.keys(stemmer).length === 0) {
+                tabell = '<p style="color:var(--tekst-sek);margin-top:8px;">Ingen stemmer ennå</p>';
             } else {
-                document.getElementById('detaljTittel').textContent = møte.tittel;
-                const link = window.location.origin + window.location.pathname + '?møte=' + møteId;
-
-                let tabell = '';
-                const stemmer = møte.stemmer || {};
-                if (Object.keys(stemmer).length === 0) {
-                    tabell = '<p style="color:var(--tekst-sek);margin-top:16px;">Ingen stemmer ennå</p>';
-                } else {
-                    tabell = '<table class="resultater-tabell"><thead><tr><th>Deltaker</th>';
+                tabell = '<div style="overflow-x:auto;"><table class="resultater-tabell"><thead><tr><th>Deltaker</th>';
+                møte.tider.forEach(tid => {
+                    tabell += `<th>${new Date(tid).toLocaleString('no-NO', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</th>`;
+                });
+                tabell += '</tr></thead><tbody>';
+                Object.entries(stemmer).forEach(([navn, s]) => {
+                    tabell += `<tr><td><strong>${navn}</strong></td>`;
                     møte.tider.forEach(tid => {
-                        tabell += `<th>${new Date(tid).toLocaleString('no-NO', { weekday:'short', hour:'2-digit', minute:'2-digit' })}</th>`;
+                        const v = s[tid] || '-';
+                        tabell += `<td class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}" style="text-align:center;">${v==='ja'?'✓':v==='nei'?'✗':'-'}</td>`;
                     });
-                    tabell += '</tr></thead><tbody>';
-                    Object.entries(stemmer).forEach(([navn, s]) => {
-                        tabell += `<tr><td><strong>${navn}</strong></td>`;
-                        møte.tider.forEach(tid => {
-                            const v = s[tid] || '-';
-                            tabell += `<td class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}" style="text-align:center;">${v==='ja'?'✓':v==='nei'?'✗':'-'}</td>`;
-                        });
-                        tabell += '</tr>';
-                    });
-                    tabell += '</tbody></table>';
-                }
-
-                document.getElementById('detaljInnhold').innerHTML = `
-                    <div class="form-gruppe">
-                        <label>Møte lenke</label>
-                        <div class="deling-boks">
-                            <input type="text" value="${link}" readonly>
-                            <button class="btn-primær" onclick="kopierLink('${link}')">Kopier</button>
-                        </div>
-                    </div>
-                    <div class="form-gruppe">
-                        <label>Tider</label>
-                        ${møte.tider.map(tid => `<div style="padding:8px;background:var(--primær-lys);border-radius:6px;margin-bottom:8px;">${new Date(tid).toLocaleString('no-NO', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>`).join('')}
-                    </div>
-                    ${tabell}
-                    <div class="knapp-gruppe">
-                        <button class="btn-fare" onclick="slettMøte('${møteId}')">Slett møte</button>
-                    </div>`;
+                    tabell += '</tr>';
+                });
+                tabell += '</tbody></table></div>';
             }
+
+            document.getElementById('detaljInnhold').innerHTML = `
+                <div class="form-gruppe">
+                    <label>Møte lenke</label>
+                    <div class="deling-boks">
+                        <input type="text" value="${link}" readonly>
+                        <button class="btn-primær" onclick="kopierLink('${link}')">Kopier</button>
+                    </div>
+                </div>
+                <div class="form-gruppe">
+                    <label>Tider</label>
+                    ${møte.tider.map(tid => `<div style="padding:8px;background:var(--primær-lys);border-radius:6px;margin-bottom:8px;">${new Date(tid).toLocaleString('no-NO', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>`).join('')}
+                </div>
+                <div class="form-gruppe">
+                    <label>Stemmeresultater</label>
+                    ${tabell}
+                </div>
+                <div class="knapp-gruppe">
+                    <button class="btn-sekundær" onclick="redigerMøte('${møteId}')">Rediger</button>
+                    <button class="btn-fare" onclick="slettMøte('${møteId}')">Slett</button>
+                </div>`;
         }
 
+        // ── Admin: Vis redigeringsskjema ──
+        function visSkjema(møteId) {
+            const møte = møter[møteId];
+            const erNy = møteId.startsWith('ny_');
+
+            document.getElementById('detaljTittel').textContent = erNy ? 'Nytt møte' : 'Rediger møte';
+            document.getElementById('detaljSection').classList.add('vis');
+
+            document.getElementById('detaljInnhold').innerHTML = `
+                <div class="form-gruppe">
+                    <label>Tittel</label>
+                    <input type="text" id="editTittel" placeholder="F.eks. Teammøte" value="${møte.tittel || ''}">
+                </div>
+                <div class="form-gruppe">
+                    <label>Beskrivelse (valgfritt)</label>
+                    <textarea id="editBeskrivelse" placeholder="Noen ord om møtet...">${møte.beskrivelse || ''}</textarea>
+                </div>
+                <div class="form-gruppe">
+                    <label>Møtetider</label>
+                    <div class="tider-container" id="editTider"></div>
+                    <button class="btn-sekundær" onclick="leggTilTid()" style="width:100%;margin-top:8px;">+ Legg til tid</button>
+                </div>
+                <div class="knapp-gruppe">
+                    <button class="btn-primær" onclick="lagreMøte()">Lagre</button>
+                    <button class="btn-sekundær" onclick="avbryt()">Avbryt</button>
+                </div>`;
+
+            renderEditTider();
+        }
+
+        window.redigerMøte = id => {
+            currentMøteId = id;
+            redigeringsModus = true;
+            visSkjema(id);
+        };
+
         function renderEditTider() {
-            document.getElementById('editTider').innerHTML = møter[currentMøteId].tider.map((tid, i) => `
+            const møte = møter[currentMøteId];
+            document.getElementById('editTider').innerHTML = møte.tider.map((tid, i) => `
                 <div class="tid-slot">
                     <input type="datetime-local" value="${tid}" onchange="oppdaterTid(${i}, this.value)">
                     <button class="btn-fare" onclick="fjernTid(${i})">Fjern</button>
@@ -627,45 +565,61 @@
         }
 
         window.oppdaterTid = (i, v) => { møter[currentMøteId].tider[i] = v; };
-        window.leggTilTid = () => { møter[currentMøteId].tider.push(''); renderEditTider(); };
-        window.fjernTid = i => { møter[currentMøteId].tider.splice(i, 1); renderEditTider(); };
+        window.leggTilTid  = () => { møter[currentMøteId].tider.push(''); renderEditTider(); };
+        window.fjernTid    = i  => { møter[currentMøteId].tider.splice(i, 1); renderEditTider(); };
 
         window.lagreMøte = async () => {
             const møte = møter[currentMøteId];
-            møte.tittel = document.getElementById('editTittel').value;
-            møte.beskrivelse = document.getElementById('editBeskrivelse').value;
+            møte.tittel = document.getElementById('editTittel').value.trim();
+            møte.beskrivelse = document.getElementById('editBeskrivelse').value.trim();
             møte.tider = møte.tider.filter(t => t);
-            if (!møte.tittel || møte.tider.length === 0) { alert('Fyll inn tittel og minst én tid'); return; }
 
-            const nyId = currentMøteId.startsWith('ny_') ? Date.now().toString() : currentMøteId;
-            møte.uid = currentUser.uid;
+            if (!møte.tittel || møte.tider.length === 0) {
+                alert('Fyll inn tittel og minst én tid');
+                return;
+            }
+
+            const erNy  = currentMøteId.startsWith('ny_');
+            const nyId  = erNy ? Date.now().toString() : currentMøteId;
+            møte.uid    = currentUser.uid;
+            if (!møte.stemmer) møte.stemmer = {};
 
             try {
-                await setDoc(doc(db, 'schedule_møter', nyId), møte);
-                if (currentMøteId.startsWith('ny_')) { delete møter[currentMøteId]; currentMøteId = nyId; }
+                await setDoc(doc(db, 'schedule_moter', nyId), møte);
+                if (erNy) {
+                    delete møter[currentMøteId];
+                    møter[nyId] = møte;
+                    currentMøteId = nyId;
+                }
+                redigeringsModus = false;
                 renderMøteListe();
                 renderMøteDetaljer(currentMøteId);
-            } catch(e) { alert('Feil: ' + e.message); }
+            } catch(e) { alert('Feil ved lagring: ' + e.message); }
         };
 
         window.avbryt = () => {
             if (currentMøteId?.startsWith('ny_')) {
                 delete møter[currentMøteId];
                 currentMøteId = null;
-                renderMøteListe();
                 document.getElementById('detaljSection').classList.remove('vis');
+            } else {
+                // Gå tilbake til visning
+                redigeringsModus = false;
+                renderMøteDetaljer(currentMøteId);
             }
+            renderMøteListe();
         };
 
         window.slettMøte = async id => {
             if (!confirm('Slett dette møtet?')) return;
             try {
-                await deleteDoc(doc(db, 'schedule_møter', id));
+                await deleteDoc(doc(db, 'schedule_moter', id));
                 delete møter[id];
                 currentMøteId = null;
+                redigeringsModus = false;
                 renderMøteListe();
                 document.getElementById('detaljSection').classList.remove('vis');
-            } catch(e) { alert('Feil: ' + e.message); }
+            } catch(e) { alert('Feil ved sletting: ' + e.message); }
         };
 
         window.kopierLink = link => {
@@ -673,67 +627,77 @@
             alert('Lenke kopiert!');
         };
 
-        // ── Deltaker funksjoner ──
-
-        async function visDeltakerPanel(møteId) {
+        // ── Deltaker: Last panel ──
+        async function lastDeltakerPanel(møteId) {
             try {
-                const snap = await getDoc(doc(db, 'schedule_møter', møteId));
+                const snap = await getDoc(doc(db, 'schedule_moter', møteId));
                 if (!snap.exists()) {
-                    document.getElementById('deltakerTiderContainer').innerHTML = '<p style="color:var(--tekst-sek);">Møte ikke funnet.</p>';
+                    document.getElementById('deltakerTiderContainer').innerHTML =
+                        '<p style="color:var(--tekst-sek);padding:20px;">Møte ikke funnet.</p>';
                     return;
                 }
                 const møte = snap.data();
                 document.getElementById('deltakerMøteTittel').textContent = møte.tittel;
                 document.getElementById('deltakerMøteBeskrivelse').textContent = møte.beskrivelse || '';
-
-                oppdaterDeltakerTider(møteId, møte);
+                renderDeltakerTider(møteId, møte);
             } catch(e) {
+                document.getElementById('deltakerTiderContainer').innerHTML =
+                    '<p style="color:var(--tekst-sek);padding:20px;">Kunne ikke laste møtet.</p>';
                 console.error(e);
             }
         }
 
-        function oppdaterDeltakerTider(møteId, møte) {
-            const navn = localStorage.getItem('deltaker_navn_' + møteId) || null;
+        function renderDeltakerTider(møteId, møte) {
+            const navn    = localStorage.getItem('deltaker_navn_' + møteId) || null;
             const stemmer = møte.stemmer || {};
 
             document.getElementById('deltakerTiderContainer').innerHTML =
                 møte.tider.map(tid => {
                     const formatted = new Date(tid).toLocaleString('no-NO', {
-                        weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
+                        weekday:'long', year:'numeric', month:'long',
+                        day:'numeric', hour:'2-digit', minute:'2-digit'
                     });
                     let ja = 0, nei = 0;
-                    Object.values(stemmer).forEach(s => { if (s[tid]==='ja') ja++; if (s[tid]==='nei') nei++; });
+                    Object.values(stemmer).forEach(s => {
+                        if (s[tid] === 'ja') ja++;
+                        if (s[tid] === 'nei') nei++;
+                    });
                     const minStemme = navn ? (stemmer[navn]?.[tid] || null) : null;
+
+                    // Escape tid for bruk i onclick-attributt
+                    const tidEscaped = tid.replace(/'/g, "\\'");
 
                     return `<div class="tid-kort">
                         <div class="tid-tekst">${formatted}</div>
                         <div class="tid-stemmer">Kan: ${ja} · Kan ikke: ${nei}</div>
                         <div class="stemme-knapp-gruppe">
-                            <button class="stemme-knapp ${minStemme==='ja'?'valgt':''}" onclick="stem('${møteId}','${tid}','ja')">✓ Kan</button>
-                            <button class="stemme-knapp ${minStemme==='nei'?'valgt':''}" onclick="stem('${møteId}','${tid}','nei')">✗ Kan ikke</button>
+                            <button class="stemme-knapp ${minStemme==='ja'?'valgt':''}" onclick="stem('${møteId}','${tidEscaped}','ja')">✓ Kan</button>
+                            <button class="stemme-knapp ${minStemme==='nei'?'valgt':''}" onclick="stem('${møteId}','${tidEscaped}','nei')">✗ Kan ikke</button>
                         </div>
                     </div>`;
-                }).join('') +
-                (navn ? '<div class="suksess-melding">✓ Stemmene dine er lagret</div>' : '');
+                }).join('')
+                + (navn ? '<div class="suksess-melding">✓ Stemmene dine er lagret</div>' : '');
         }
 
         window.stem = async (møteId, tid, stemme) => {
             let navn = localStorage.getItem('deltaker_navn_' + møteId);
             if (!navn) {
                 navn = prompt('Hva heter du?');
-                if (!navn) return;
+                if (!navn || !navn.trim()) return;
+                navn = navn.trim();
                 localStorage.setItem('deltaker_navn_' + møteId, navn);
             }
 
             try {
-                const snap = await getDoc(doc(db, 'schedule_møter', møteId));
+                const snap = await getDoc(doc(db, 'schedule_moter', møteId));
+                if (!snap.exists()) { alert('Møtet finnes ikke lenger'); return; }
                 const møte = snap.data();
-                if (!møte.stemmer) møte.stemmer = {};
-                if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
-                møte.stemmer[navn][tid] = stemme;
-                await setDoc(doc(db, 'schedule_møter', møteId), møte);
-                oppdaterDeltakerTider(møteId, møte);
-            } catch(e) { alert('Feil: ' + e.message); }
+                if (!møte.stemmer)        møte.stemmer = {};
+                if (!møte.stemmer[navn])  møte.stemmer[navn] = {};
+                møte.stemmer[navn][tid]   = stemme;
+                await setDoc(doc(db, 'schedule_moter', møteId), møte);
+                renderDeltakerTider(møteId, møte);
+            } catch(e) { alert('Feil ved stemming: ' + e.message); }
         };
     </script>
 </body>
