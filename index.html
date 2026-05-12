@@ -210,7 +210,7 @@
         }
         .timeplan-slot {
             display: flex; align-items: flex-start;
-            height: 24px;
+            height: 18px;
             border-bottom: 1px solid var(--kant);
             cursor: pointer;
             transition: background 0.1s;
@@ -218,8 +218,8 @@
         }
         .timeplan-slot:last-child { border-bottom: none; }
         .timeplan-slot:hover { background: var(--primær-lys); }
-        .timeplan-slot.hel-time { border-bottom: 1px solid var(--primær-mid); }
-        .timeplan-slot.stiplet { border-bottom: 1px dashed var(--kant); }
+        .timeplan-slot.hel-time { border-bottom: 2px solid var(--primær-mid); }
+        .timeplan-slot.stiplet { border-bottom: 1px dashed rgba(212,210,238,0.5); }
         .timeplan-tid {
             width: 48px; min-width: 48px;
             font-size: 11px; color: var(--tekst-sek);
@@ -378,7 +378,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.04</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.05</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -388,7 +388,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.04</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.05</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -487,9 +487,15 @@
         }
 
         // ── Auth ──
+        const ADMIN_EPOST = 'eirik.sorbo@gmail.com'; // Kun denne brukeren får logge inn
+
         window.signIn = async () => {
             try {
-                await signInWithPopup(auth, new GoogleAuthProvider());
+                const result = await signInWithPopup(auth, new GoogleAuthProvider());
+                if (result.user.email !== ADMIN_EPOST) {
+                    await signOut(auth);
+                    alert('Denne appen er kun for arrangøren.');
+                }
             } catch(e) {
                 alert('Innlogging feilet: ' + e.message);
             }
@@ -500,7 +506,7 @@
         onAuthStateChanged(auth, async bruker => {
             if (erDeltaker) return; // ikke forstyrr deltaker-modus
 
-            if (bruker) {
+            if (bruker && bruker.email === ADMIN_EPOST) {
                 currentUser = bruker;
                 document.getElementById('loginOverlay').style.display = 'none';
                 document.getElementById('appHeader').style.display = 'flex';
@@ -586,24 +592,76 @@
             const link = window.location.origin + window.location.pathname + '?møte=' + møteId;
 
             const stemmer = møte.stemmer || {};
+            const deltakere = Object.keys(stemmer);
+            const antallDeltakere = deltakere.length;
+
+            // Grupper tider per dato
+            const datoGrupper = {};
+            møte.tider.forEach(tid => {
+                const dato = new Date(tid).toLocaleDateString('no-NO', { weekday:'short', day:'numeric', month:'short' });
+                if (!datoGrupper[dato]) datoGrupper[dato] = [];
+                datoGrupper[dato].push(tid);
+            });
+
+            // Tell ja per tid
+            const jaPerTid = {};
+            møte.tider.forEach(tid => {
+                jaPerTid[tid] = deltakere.filter(n => stemmer[n]?.[tid] === 'ja').length;
+            });
+            const maxJa = Math.max(...Object.values(jaPerTid), 0);
+            const alleKanTider = møte.tider.filter(t => jaPerTid[t] === antallDeltakere && antallDeltakere > 0);
+
+            function tidFarge(tid) {
+                if (antallDeltakere === 0) return 'var(--primær-lys)';
+                const ja = jaPerTid[tid] || 0;
+                if (ja === antallDeltakere) return '#d1fae5';
+                if (ja === maxJa && ja > 0) return '#fef3c7';
+                return 'var(--primær-lys)';
+            }
+
+            // Analysetekst
+            let analyseTekst = '';
+            if (antallDeltakere === 0) {
+                analyseTekst = '<p style="color:var(--tekst-sek);font-size:0.9em;margin-bottom:8px;">Ingen har stemt ennå.</p>';
+            } else if (alleKanTider.length > 0) {
+                const tidTexts = alleKanTider.map(t => {
+                    const s = new Date(t), e = new Date(s.getTime() + (møte.varighet||60)*60000);
+                    const fmt = d => d.toLocaleString('no-NO',{hour:'2-digit',minute:'2-digit'});
+                    return s.toLocaleString('no-NO',{weekday:'short',day:'numeric',month:'short'}) + ' ' + fmt(s) + '–' + fmt(e);
+                }).join(', ');
+                analyseTekst = `<div style="background:#d1fae5;border:1px solid #6ee7b7;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:0.9em;">✅ <strong>Alle kan:</strong> ${tidTexts}</div>`;
+            } else if (maxJa > 0) {
+                const besteTider = møte.tider.filter(t => jaPerTid[t] === maxJa);
+                const ikkeKan = [...new Set(besteTider.flatMap(t => deltakere.filter(n => stemmer[n]?.[t] !== 'ja')))];
+                analyseTekst = `<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:0.9em;">⚡ <strong>Flest kan (${maxJa}/${antallDeltakere}).</strong>${ikkeKan.length ? ' Kan ikke: ' + ikkeKan.join(', ') + '.' : ''}</div>`;
+            }
+
+            // Tabell gruppert per dato
             let tabell = '';
-            if (Object.keys(stemmer).length === 0) {
-                tabell = '<p style="color:var(--tekst-sek);margin-top:8px;">Ingen stemmer ennå</p>';
+            if (antallDeltakere === 0) {
+                tabell = '<p style="color:var(--tekst-sek);margin-top:8px;">Ingen stemmer ennå.</p>';
             } else {
-                tabell = '<div style="overflow-x:auto;"><table class="resultater-tabell"><thead><tr><th>Deltaker</th>';
-                møte.tider.forEach(tid => {
-                    tabell += `<th>${new Date(tid).toLocaleString('no-NO', { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</th>`;
-                });
-                tabell += '</tr></thead><tbody>';
-                Object.entries(stemmer).forEach(([navn, s]) => {
-                    tabell += `<tr><td><strong>${navn}</strong></td>`;
-                    møte.tider.forEach(tid => {
-                        const v = s[tid] || '-';
-                        tabell += `<td class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}" style="text-align:center;">${v==='ja'?'✓':v==='nei'?'✗':'-'}</td>`;
+                tabell = analyseTekst + '<div style="overflow-x:auto;">';
+                Object.entries(datoGrupper).forEach(([dato, tiderIDato]) => {
+                    tabell += `<div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--tekst-sek);padding:10px 0 4px;">${dato}</div>`;
+                    tabell += '<table class="resultater-tabell" style="margin-top:0;margin-bottom:12px;"><thead><tr><th style="min-width:80px;">Deltaker</th>';
+                    tiderIDato.forEach(tid => {
+                        const s = new Date(tid), e = new Date(s.getTime() + (møte.varighet||60)*60000);
+                        const fmt = d => d.toLocaleString('no-NO',{hour:'2-digit',minute:'2-digit'});
+                        tabell += `<th style="text-align:center;background:${tidFarge(tid)};padding:6px 10px;">${fmt(s)}<br><span style="font-weight:400;font-size:10px;opacity:0.7;">–${fmt(e)}</span></th>`;
                     });
-                    tabell += '</tr>';
+                    tabell += '</tr></thead><tbody>';
+                    deltakere.forEach(navn => {
+                        tabell += `<tr><td><strong>${navn}</strong></td>`;
+                        tiderIDato.forEach(tid => {
+                            const v = stemmer[navn]?.[tid] || '–';
+                            tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 10px;" class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}">${v==='ja'?'✓':v==='nei'?'✗':'–'}</td>`;
+                        });
+                        tabell += '</tr>';
+                    });
+                    tabell += '</tbody></table>';
                 });
-                tabell += '</tbody></table></div>';
+                tabell += '</div>';
             }
 
             document.getElementById('detaljInnhold').innerHTML = `
@@ -619,6 +677,10 @@
                     </div>
                 </div>
                 <div class="form-gruppe">
+                    <label>Varighet</label>
+                    <div style="padding:8px;background:var(--primær-lys);border-radius:6px;">${varighetTekst(møte.varighet)}</div>
+                </div>
+                <div class="form-gruppe">
                     <label>Tider</label>
                     ${møte.tider.map(tid => {
                         const start = new Date(tid);
@@ -627,10 +689,6 @@
                         const dag = start.toLocaleString('no-NO', { year:'numeric', month:'short', day:'numeric' });
                         return `<div style="padding:8px;background:var(--primær-lys);border-radius:6px;margin-bottom:8px;">${dag}, ${fmt(start)}–${fmt(slutt)}</div>`;
                     }).join('')}
-                </div>
-                <div class="form-gruppe">
-                    <label>Varighet</label>
-                    <div style="padding:8px;background:var(--primær-lys);border-radius:6px;">${varighetTekst(møte.varighet)}</div>
                 </div>
                 <div class="knapp-gruppe">
                     <button class="btn-sekundær" onclick="redigerMøte('${møteId}')">Rediger</button>
@@ -727,7 +785,7 @@
             const startTime = 7 * 60;  // 07:00
             const sluttTime = 21 * 60; // 21:00
             const antallSlots = (sluttTime - startTime) / slotMinutter;
-            const slotHøyde = 24;
+            const slotHøyde = 18;
             const blokkhøyde = (varighet / slotMinutter) * slotHøyde;
 
             const datoLabel = timeplanDato.toLocaleDateString('no-NO', { weekday:'long', day:'numeric', month:'long' });
@@ -761,11 +819,18 @@
 
             const grid = document.getElementById('timeplanGrid');
             if (!grid) return;
+
+            // Bevar scroll-posisjon
+            const wrapper = document.getElementById('timeplanWrapper');
+            const scrollPosFør = wrapper ? wrapper.scrollTop : null;
+
             grid.innerHTML = html;
 
-            // Scroll til 08:00 (1 time fra start = 4 slots * 24px)
-            const wrapper = document.getElementById('timeplanWrapper');
-            if (wrapper) wrapper.scrollTop = 4 * 24;
+            // Scroll til 08:00 kun første gang (når scrollPos er 0 eller null)
+            if (wrapper) {
+                const åtteNull = 4 * 18; // 07:00 + 4 slots à 18px = 08:00
+                wrapper.scrollTop = (scrollPosFør && scrollPosFør > 0) ? scrollPosFør : åtteNull;
+            }
 
             // Tegn blokker for valgte tider
             valgtePåDenneDagen.forEach(tid => {
