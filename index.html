@@ -4,13 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Schedule</title>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Syne:wght@700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <style>
-        *, *::before, *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
             --primær: #9490d4;
@@ -35,12 +31,47 @@
             line-height: 1.5;
         }
 
+        /* ── Login Overlay ── */
+        #loginOverlay {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        #loginOverlay button {
+            background: var(--primær);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 13px 28px;
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+
+        #loginOverlay button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(148, 144, 212, 0.3);
+        }
+
         /* ── Header ── */
         header {
             background: var(--hvit);
             border-bottom: 1px solid var(--kant);
             padding: 0 20px;
-            display: flex;
+            display: none;
             align-items: center;
             justify-content: space-between;
             height: 64px;
@@ -63,20 +94,16 @@
             align-items: center;
         }
 
-        .bruker-info {
-            text-align: right;
-            font-size: 0.9em;
-            display: none;
-        }
-
         .bruker-navn {
             font-weight: 600;
             color: var(--tekst);
+            font-size: 0.9em;
         }
 
         .bruker-rolle {
-            font-size: 0.85em;
+            font-size: 0.8em;
             color: var(--tekst-sek);
+            text-align: right;
         }
 
         .header-knapp {
@@ -90,9 +117,8 @@
             align-items: center;
             justify-content: center;
             color: var(--tekst-sek);
-            font-size: 18px;
+            font-size: 16px;
             transition: all 0.15s;
-            display: none;
         }
 
         .header-knapp:hover {
@@ -101,24 +127,9 @@
             border-color: var(--primær-mid);
         }
 
-        /* ── Login Panel ── */
-        #loginOverlay {
-            display: flex;
-            position: fixed;
-            inset: 0;
-            background: var(--bg);
-            z-index: 9999;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 24px;
-        }
-
-        #loginOverlay button:hover {
-            opacity: 0.95;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(148, 144, 212, 0.3);
-        }
+        /* ── Paneler ── */
+        .panel { display: none; }
+        .panel.aktiv { display: block; }
 
         /* ── Main ── */
         main {
@@ -127,15 +138,7 @@
             padding: 20px 12px 64px;
         }
 
-        .panel {
-            display: none;
-        }
-
-        .panel.aktiv {
-            display: block;
-        }
-
-        /* ── Admin View ── */
+        /* ── Admin Grid ── */
         .admin-grid {
             display: grid;
             grid-template-columns: 1fr 2fr;
@@ -164,10 +167,7 @@
             letter-spacing: 0.3px;
         }
 
-        .møte-liste {
-            display: flex;
-            flex-direction: column;
-        }
+        .møte-liste { display: flex; flex-direction: column; }
 
         .møte-item {
             padding: 13px 20px;
@@ -176,31 +176,12 @@
             transition: background 0.15s;
             border-left: 4px solid transparent;
         }
+        .møte-item:last-child { border-bottom: none; }
+        .møte-item:hover { background: var(--primær-lys); }
+        .møte-item.aktiv { background: var(--primær-lys); border-left-color: var(--primær); }
 
-        .møte-item:last-child {
-            border-bottom: none;
-        }
-
-        .møte-item:hover {
-            background: var(--primær-lys);
-        }
-
-        .møte-item.aktiv {
-            background: var(--primær-lys);
-            border-left-color: var(--primær);
-        }
-
-        .møte-tittel {
-            font-weight: 700;
-            font-size: 14px;
-            color: var(--tekst);
-            margin-bottom: 4px;
-        }
-
-        .møte-meta {
-            font-size: 12px;
-            color: var(--tekst-sek);
-        }
+        .møte-tittel { font-weight: 700; font-size: 14px; color: var(--tekst); margin-bottom: 4px; }
+        .møte-meta { font-size: 12px; color: var(--tekst-sek); }
 
         .legg-til-knapp {
             background: var(--primær);
@@ -218,10 +199,7 @@
             width: calc(100% - 40px);
             margin: 12px 20px 20px;
         }
-
-        .legg-til-knapp:hover {
-            background: var(--primær-mørk);
-        }
+        .legg-til-knapp:hover { background: var(--primær-mørk); }
 
         .tom-melding {
             padding: 32px 20px;
@@ -230,22 +208,13 @@
             font-size: 14px;
         }
 
-        /* ── Detaljer ── */
-        #detaljSection {
-            display: none;
-        }
+        #detaljSection { display: none; }
+        #detaljSection.vis { display: block; }
 
-        #detaljSection.vis {
-            display: block;
-        }
+        .kort-innhold { padding: 20px; }
 
-        .kort-innhold {
-            padding: 20px;
-        }
-
-        .form-gruppe {
-            margin-bottom: 20px;
-        }
+        /* ── Skjema ── */
+        .form-gruppe { margin-bottom: 20px; }
 
         label {
             display: block;
@@ -256,9 +225,7 @@
             font-family: 'Syne', sans-serif;
         }
 
-        input[type="text"],
-        input[type="datetime-local"],
-        textarea {
+        input[type="text"], input[type="datetime-local"], textarea {
             width: 100%;
             padding: 10px 12px;
             border: 2px solid var(--kant);
@@ -268,18 +235,13 @@
             transition: border-color 0.2s;
         }
 
-        input[type="text"]:focus,
-        input[type="datetime-local"]:focus,
-        textarea:focus {
+        input[type="text"]:focus, input[type="datetime-local"]:focus, textarea:focus {
             outline: none;
             border-color: var(--primær);
             box-shadow: 0 0 0 3px rgba(148, 144, 212, 0.1);
         }
 
-        textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
+        textarea { resize: vertical; min-height: 80px; }
 
         .tider-container {
             background: var(--primær-lys);
@@ -288,22 +250,11 @@
             margin: 12px 0;
         }
 
-        .tid-slot {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-            align-items: center;
-        }
+        .tid-slot { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+        .tid-slot:last-child { margin-bottom: 0; }
+        .tid-slot input { flex: 1; margin-bottom: 0; }
 
-        .tid-slot:last-child {
-            margin-bottom: 0;
-        }
-
-        .tid-slot input {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
+        /* ── Knapper ── */
         button {
             padding: 10px 16px;
             border: none;
@@ -315,51 +266,18 @@
             font-family: 'Syne', sans-serif;
         }
 
-        .btn-primær {
-            background: var(--primær);
-            color: white;
-        }
+        .btn-primær { background: var(--primær); color: white; }
+        .btn-primær:hover { background: var(--primær-mørk); }
+        .btn-sekundær { background: var(--kant); color: var(--tekst); }
+        .btn-sekundær:hover { background: var(--primær-mid); }
+        .btn-fare { background: #f87171; color: white; }
+        .btn-fare:hover { background: #dc2626; }
 
-        .btn-primær:hover {
-            background: var(--primær-mørk);
-        }
+        .knapp-gruppe { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
+        .knapp-gruppe button { flex: 1; min-width: 120px; }
 
-        .btn-sekundær {
-            background: var(--kant);
-            color: var(--tekst);
-        }
-
-        .btn-sekundær:hover {
-            background: var(--primær-mid);
-        }
-
-        .btn-fare {
-            background: #f87171;
-            color: white;
-        }
-
-        .btn-fare:hover {
-            background: #dc2626;
-        }
-
-        .knapp-gruppe {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-
-        .knapp-gruppe button {
-            flex: 1;
-            min-width: 120px;
-        }
-
-        .resultater-tabell {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 16px 0;
-        }
-
+        /* ── Resultater ── */
+        .resultater-tabell { width: 100%; border-collapse: collapse; margin: 16px 0; }
         .resultater-tabell th {
             background: var(--primær-lys);
             padding: 12px;
@@ -370,25 +288,10 @@
             font-family: 'Syne', sans-serif;
             font-size: 12px;
         }
-
-        .resultater-tabell td {
-            padding: 12px;
-            border-bottom: 1px solid var(--kant);
-        }
-
-        .resultater-tabell tr:hover {
-            background: var(--primær-lys);
-        }
-
-        .stemme-ja {
-            color: #10b981;
-            font-weight: 700;
-        }
-
-        .stemme-nei {
-            color: #f87171;
-            font-weight: 700;
-        }
+        .resultater-tabell td { padding: 12px; border-bottom: 1px solid var(--kant); }
+        .resultater-tabell tr:hover { background: var(--primær-lys); }
+        .stemme-ja { color: #10b981; font-weight: 700; }
+        .stemme-nei { color: #f87171; font-weight: 700; }
 
         .deling-boks {
             background: var(--primær-lys);
@@ -399,19 +302,10 @@
             display: flex;
             gap: 8px;
         }
+        .deling-boks input { flex: 1; background: var(--hvit); border: 1px solid var(--kant); }
 
-        .deling-boks input {
-            flex: 1;
-            margin-bottom: 0;
-            background: var(--hvit);
-            border: 1px solid var(--kant);
-        }
-
-        /* ── Deltaker View ── */
-        .deltaker-container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
+        /* ── Deltaker ── */
+        .deltaker-container { max-width: 600px; margin: 0 auto; }
 
         .møte-header {
             background: var(--hvit);
@@ -421,17 +315,8 @@
             border: 1px solid var(--kant);
             border-left: 4px solid var(--primær);
         }
-
-        .møte-header h2 {
-            color: var(--primær);
-            margin-bottom: 8px;
-            font-family: 'Syne', sans-serif;
-        }
-
-        .møte-header p {
-            color: var(--tekst-sek);
-            font-size: 0.95em;
-        }
+        .møte-header h2 { color: var(--primær); margin-bottom: 8px; font-family: 'Syne', sans-serif; }
+        .møte-header p { color: var(--tekst-sek); font-size: 0.95em; }
 
         .tid-kort {
             background: var(--hvit);
@@ -442,28 +327,10 @@
             border-left: 4px solid var(--primær);
         }
 
-        .tid-header {
-            margin-bottom: 16px;
-        }
+        .tid-tekst { font-weight: 700; color: var(--tekst); font-size: 1.05em; margin-bottom: 4px; font-family: 'Syne', sans-serif; }
+        .tid-stemmer { font-size: 0.9em; color: var(--tekst-sek); margin-bottom: 16px; }
 
-        .tid-tekst {
-            font-weight: 700;
-            color: var(--tekst);
-            font-size: 1.05em;
-            margin-bottom: 4px;
-            font-family: 'Syne', sans-serif;
-        }
-
-        .tid-stemmer {
-            font-size: 0.9em;
-            color: var(--tekst-sek);
-        }
-
-        .stemme-knapp-gruppe {
-            display: flex;
-            gap: 8px;
-        }
-
+        .stemme-knapp-gruppe { display: flex; gap: 8px; }
         .stemme-knapp {
             flex: 1;
             padding: 12px;
@@ -476,17 +343,8 @@
             font-size: 0.95em;
             font-family: 'Syne', sans-serif;
         }
-
-        .stemme-knapp:hover {
-            border-color: var(--primær);
-            background: var(--primær-lys);
-        }
-
-        .stemme-knapp.valgt {
-            background: var(--primær);
-            color: white;
-            border-color: var(--primær);
-        }
+        .stemme-knapp:hover { border-color: var(--primær); background: var(--primær-lys); }
+        .stemme-knapp.valgt { background: var(--primær); color: white; border-color: var(--primær); }
 
         .suksess-melding {
             background: var(--primær-lys);
@@ -500,43 +358,18 @@
         }
 
         @media (max-width: 768px) {
-            .admin-grid {
-                grid-template-columns: 1fr;
-            }
-
-            header {
-                padding: 12px 20px;
-            }
-
-            .knapp-gruppe {
-                flex-direction: column;
-            }
-
-            .knapp-gruppe button {
-                width: 100%;
-            }
+            .admin-grid { grid-template-columns: 1fr; }
+            .knapp-gruppe { flex-direction: column; }
+            .knapp-gruppe button { width: 100%; }
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <header id="header" style="display: none;">
-        <div class="logo">Schedule</div>
-        <div class="header-handlinger">
-            <div class="bruker-info" id="brukerInfo">
-                <div class="bruker-navn" id="brukerNavn"></div>
-                <div class="bruker-rolle">Admin</div>
-            </div>
-            <button class="header-knapp" id="logoutBtn" onclick="logout()">🚪</button>
-        </div>
-    </header>
 
-    <!-- Login Panel -->
+    <!-- Login Overlay -->
     <div id="loginOverlay">
         <svg width="72" height="72" viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <clipPath id="licp"><circle cx="46" cy="36" r="18"/></clipPath>
-            </defs>
+            <defs><clipPath id="licp"><circle cx="46" cy="36" r="18"/></clipPath></defs>
             <rect width="72" height="72" rx="18" fill="white" stroke="#e0e0e0" stroke-width="1"/>
             <circle cx="26" cy="36" r="18" fill="#9490d4"/>
             <circle cx="46" cy="36" r="18" fill="#b4e8a8"/>
@@ -545,35 +378,36 @@
             <circle cx="46" cy="36" r="18" fill="none" stroke="#6ca060" stroke-width="1"/>
         </svg>
         <div style="text-align:center;">
-            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);font-variant-numeric:lining-nums;font-feature-settings:'lnum' 1;">Schedule</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
         </div>
-        <button onclick="signIn()" style="background:var(--primær);color:white;border:none;border-radius:10px;padding:13px 28px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:10px;">
+        <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
             Logg inn med Google
         </button>
     </div>
 
-    <!-- Admin Panel -->
-    <div id="adminPanel" class="panel aktiv">
-        <header id="header" style="display: flex;">
-            <div class="logo">Schedule</div>
-            <div class="header-handlinger">
-                <div class="bruker-info" id="brukerInfo">
-                    <div class="bruker-navn" id="brukerNavn"></div>
-                    <div class="bruker-rolle">Admin</div>
-                </div>
-                <button class="header-knapp" id="logoutBtn" onclick="logout()" style="display: flex;">🚪</button>
+    <!-- Header (kun admin) -->
+    <header id="appHeader">
+        <div class="logo">Schedule</div>
+        <div class="header-handlinger">
+            <div>
+                <div class="bruker-navn" id="brukerNavn"></div>
+                <div class="bruker-rolle">Admin</div>
             </div>
-        </header>
+            <button class="header-knapp" onclick="logout()" title="Logg ut">🚪</button>
+        </div>
+    </header>
 
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="panel">
         <main>
             <div class="admin-grid">
                 <div class="kort">
                     <div class="kort-header">
                         <div class="kort-tittel">Dine møter</div>
                     </div>
-                    <div class="kort-innhold">
+                    <div>
                         <div class="møte-liste" id="møteListe"></div>
                         <button class="legg-til-knapp" onclick="opprettNyttMøte()">+ Nytt møte</button>
                     </div>
@@ -582,7 +416,7 @@
                 <div id="detaljSection">
                     <div class="kort">
                         <div class="kort-header">
-                            <div class="kort-tittel" id="detaljTittel">Opprett møte</div>
+                            <div class="kort-tittel" id="detaljTittel"></div>
                         </div>
                         <div class="kort-innhold" id="detaljInnhold"></div>
                     </div>
@@ -608,7 +442,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, where }
+        import { getFirestore, collection, doc, setDoc, getDoc, deleteDoc, onSnapshot, query, where }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -620,15 +454,26 @@
             appId: "1:547633808881:web:e761037ef250b715e07050"
         };
 
-        const app = initializeApp(firebaseConfig);
+        const app  = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
+        const db   = getFirestore(app);
 
         let currentUser = null;
         let currentMøteId = null;
         let møter = {};
 
-        // Sign In
+        // Sjekk URL umiddelbart
+        const urlParams = new URLSearchParams(window.location.search);
+        const møteIdFraUrl = urlParams.get('møte');
+
+        if (møteIdFraUrl) {
+            // Deltaker-modus: skjul login, vis deltaker-panel
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('deltakerPanel').classList.add('aktiv');
+            visDeltakerPanel(møteIdFraUrl);
+        }
+
+        // Auth
         window.signIn = async () => {
             try {
                 await signInWithPopup(auth, new GoogleAuthProvider());
@@ -637,242 +482,174 @@
             }
         };
 
-        // Sign Out
         window.logout = async () => {
             await signOut(auth);
         };
 
-        // Auth State
         onAuthStateChanged(auth, async bruker => {
-            const loginOverlay = document.getElementById('loginOverlay');
-            const brukerInfo = document.getElementById('brukerInfo');
-            const brukerNavn = document.getElementById('brukerNavn');
-            const header = document.getElementById('header');
-            const adminPanel = document.getElementById('adminPanel');
-            const deltakerPanel = document.getElementById('deltakerPanel');
+            // Ikke forstyrr deltaker-modus
+            if (møteIdFraUrl) return;
 
             if (bruker) {
-                // Logget inn
                 currentUser = bruker;
-                loginOverlay.style.display = 'none';
-                header.style.display = 'flex';
-                adminPanel.classList.add('aktiv');
-                deltakerPanel.classList.remove('aktiv');
-                brukerNavn.textContent = bruker.displayName || bruker.email;
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('appHeader').style.display = 'flex';
+                document.getElementById('adminPanel').classList.add('aktiv');
+                document.getElementById('deltakerPanel').classList.remove('aktiv');
+                document.getElementById('brukerNavn').textContent = bruker.displayName || bruker.email;
 
-                // Hent møter fra Firestore
                 const q = query(collection(db, 'schedule_møter'), where('uid', '==', bruker.uid));
                 onSnapshot(q, snapshot => {
                     møter = {};
-                    snapshot.forEach(doc => {
-                        møter[doc.id] = doc.data();
-                    });
+                    snapshot.forEach(d => { møter[d.id] = d.data(); });
                     renderMøteListe();
                 });
             } else {
-                // Ikke logget inn
                 currentUser = null;
-                loginOverlay.style.display = 'flex';
-                header.style.display = 'none';
-                adminPanel.classList.remove('aktiv');
+                document.getElementById('loginOverlay').style.display = 'flex';
+                document.getElementById('appHeader').style.display = 'none';
+                document.getElementById('adminPanel').classList.remove('aktiv');
                 møter = {};
             }
         });
 
-        // Møte Liste
+        // ── Admin funksjoner ──
+
         function renderMøteListe() {
             const liste = document.getElementById('møteListe');
-            const møteIds = Object.keys(møter);
+            const ids = Object.keys(møter);
 
-            if (møteIds.length === 0) {
-                liste.innerHTML = '<div class="tom-melding">Ingen møter ennå. Opprett ditt første møte!</div>';
+            if (ids.length === 0) {
+                liste.innerHTML = '<div class="tom-melding">Ingen møter ennå</div>';
                 document.getElementById('detaljSection').classList.remove('vis');
                 return;
             }
 
-            liste.innerHTML = møteIds.map(id => {
-                const møte = møter[id];
+            liste.innerHTML = ids.map(id => {
+                const m = møter[id];
                 const aktiv = currentMøteId === id ? 'aktiv' : '';
-                const deltakere = Object.keys(møte.stemmer || {}).length;
-                return `
-                    <div class="møte-item ${aktiv}" onclick="velgMøte('${id}')">
-                        <div class="møte-tittel">${møte.tittel}</div>
-                        <div class="møte-meta">${møte.tider.length} tider · ${deltakere} deltaker(e)</div>
-                    </div>
-                `;
+                const antall = Object.keys(m.stemmer || {}).length;
+                return `<div class="møte-item ${aktiv}" onclick="velgMøte('${id}')">
+                    <div class="møte-tittel">${m.tittel}</div>
+                    <div class="møte-meta">${m.tider.length} tider · ${antall} deltaker(e)</div>
+                </div>`;
             }).join('');
         }
 
-        window.velgMøte = (møteId) => {
-            currentMøteId = møteId;
+        window.velgMøte = id => {
+            currentMøteId = id;
             renderMøteListe();
-            renderMøteDetaljer(møteId);
+            renderMøteDetaljer(id);
         };
 
-        // Opprett Møte
         window.opprettNyttMøte = () => {
             currentMøteId = 'ny_' + Date.now();
-            møter[currentMøteId] = {
-                tittel: '',
-                beskrivelse: '',
-                tider: [''],
-                stemmer: {}
-            };
+            møter[currentMøteId] = { tittel: '', beskrivelse: '', tider: [''], stemmer: {} };
             renderMøteListe();
             renderMøteDetaljer(currentMøteId);
         };
 
         function renderMøteDetaljer(møteId) {
             const møte = møter[møteId];
-            const detaljSection = document.getElementById('detaljSection');
-            const detaljTittel = document.getElementById('detaljTittel');
-            const detaljInnhold = document.getElementById('detaljInnhold');
+            document.getElementById('detaljSection').classList.add('vis');
 
             if (møteId.startsWith('ny_')) {
-                detaljTittel.textContent = 'Opprett møte';
-                detaljInnhold.innerHTML = `
+                document.getElementById('detaljTittel').textContent = 'Nytt møte';
+                document.getElementById('detaljInnhold').innerHTML = `
                     <div class="form-gruppe">
-                        <label>Møte tittel</label>
-                        <input type="text" id="editTittel" value="${møte.tittel}" placeholder="F.eks. Teammøte">
+                        <label>Tittel</label>
+                        <input type="text" id="editTittel" placeholder="F.eks. Teammøte" value="${møte.tittel}">
                     </div>
-
                     <div class="form-gruppe">
                         <label>Beskrivelse (valgfritt)</label>
                         <textarea id="editBeskrivelse" placeholder="Noen ord om møtet...">${møte.beskrivelse || ''}</textarea>
                     </div>
-
                     <div class="form-gruppe">
                         <label>Møtetider</label>
                         <div class="tider-container" id="editTider"></div>
-                        <button class="btn-sekundær" onclick="leggTilTid()" style="width: 100%; margin-top: 8px;">+ Legg til tid</button>
+                        <button class="btn-sekundær" onclick="leggTilTid()" style="width:100%;margin-top:8px;">+ Legg til tid</button>
                     </div>
-
                     <div class="knapp-gruppe">
                         <button class="btn-primær" onclick="lagreMøte()">Lagre møte</button>
-                        <button class="btn-sekundær" onclick="avbrytRedigering()">Avbryt</button>
-                    </div>
-                `;
+                        <button class="btn-sekundær" onclick="avbryt()">Avbryt</button>
+                    </div>`;
                 renderEditTider();
             } else {
-                detaljTittel.textContent = møte.tittel;
-                const delingsLink = window.location.origin + window.location.pathname + '?møte=' + møteId;
+                document.getElementById('detaljTittel').textContent = møte.tittel;
+                const link = window.location.origin + window.location.pathname + '?møte=' + møteId;
 
-                let resultatHTML = '<h3 style="margin: 20px 0 16px; color: var(--tekst); font-family: Syne;">Stemmeresultater</h3>';
-                if (Object.keys(møte.stemmer || {}).length === 0) {
-                    resultatHTML += '<p style="color: var(--tekst-sek);">Ingen stemmer ennå</p>';
+                let tabell = '';
+                const stemmer = møte.stemmer || {};
+                if (Object.keys(stemmer).length === 0) {
+                    tabell = '<p style="color:var(--tekst-sek);margin-top:16px;">Ingen stemmer ennå</p>';
                 } else {
-                    resultatHTML += '<table class="resultater-tabell"><thead><tr><th>Deltaker</th>';
+                    tabell = '<table class="resultater-tabell"><thead><tr><th>Deltaker</th>';
                     møte.tider.forEach(tid => {
-                        const formatted = new Date(tid).toLocaleString('no-NO', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
-                        resultatHTML += `<th>${formatted}</th>`;
+                        tabell += `<th>${new Date(tid).toLocaleString('no-NO', { weekday:'short', hour:'2-digit', minute:'2-digit' })}</th>`;
                     });
-                    resultatHTML += '</tr></thead><tbody>';
-
-                    Object.entries(møte.stemmer).forEach(([navn, stemmer]) => {
-                        resultatHTML += `<tr><td><strong>${navn}</strong></td>`;
+                    tabell += '</tr></thead><tbody>';
+                    Object.entries(stemmer).forEach(([navn, s]) => {
+                        tabell += `<tr><td><strong>${navn}</strong></td>`;
                         møte.tider.forEach(tid => {
-                            const stemme = stemmer[tid] || '-';
-                            const klasse = stemme === 'ja' ? 'stemme-ja' : stemme === 'nei' ? 'stemme-nei' : '';
-                            const symbol = stemme === 'ja' ? '✓' : stemme === 'nei' ? '✗' : '-';
-                            resultatHTML += `<td class="${klasse}" style="text-align: center;">${symbol}</td>`;
+                            const v = s[tid] || '-';
+                            tabell += `<td class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}" style="text-align:center;">${v==='ja'?'✓':v==='nei'?'✗':'-'}</td>`;
                         });
-                        resultatHTML += '</tr>';
+                        tabell += '</tr>';
                     });
-                    resultatHTML += '</tbody></table>';
+                    tabell += '</tbody></table>';
                 }
 
-                detaljInnhold.innerHTML = `
+                document.getElementById('detaljInnhold').innerHTML = `
                     <div class="form-gruppe">
                         <label>Møte lenke</label>
                         <div class="deling-boks">
-                            <input type="text" value="${delingsLink}" readonly>
-                            <button class="btn-primær" onclick="kopierLink('${delingsLink}')">Kopier</button>
+                            <input type="text" value="${link}" readonly>
+                            <button class="btn-primær" onclick="kopierLink('${link}')">Kopier</button>
                         </div>
                     </div>
-
                     <div class="form-gruppe">
-                        <label>Møtetider</label>
-                        ${møte.tider.map(tid => {
-                            const formatted = new Date(tid).toLocaleString('no-NO', { 
-                                year: 'numeric', month: 'short', day: 'numeric', 
-                                hour: '2-digit', minute: '2-digit' 
-                            });
-                            return `<div style="padding: 8px; background: var(--primær-lys); border-radius: 6px; margin-bottom: 8px;">${formatted}</div>`;
-                        }).join('')}
+                        <label>Tider</label>
+                        ${møte.tider.map(tid => `<div style="padding:8px;background:var(--primær-lys);border-radius:6px;margin-bottom:8px;">${new Date(tid).toLocaleString('no-NO', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>`).join('')}
                     </div>
-
-                    ${resultatHTML}
-
+                    ${tabell}
                     <div class="knapp-gruppe">
-                        <button class="btn-sekundær" onclick="redigerMøte('${møteId}')">Rediger</button>
-                        <button class="btn-fare" onclick="slettMøte('${møteId}')">Slett</button>
-                    </div>
-                `;
+                        <button class="btn-fare" onclick="slettMøte('${møteId}')">Slett møte</button>
+                    </div>`;
             }
-
-            detaljSection.classList.add('vis');
         }
 
         function renderEditTider() {
-            const container = document.getElementById('editTider');
-            const møte = møter[currentMøteId];
-
-            container.innerHTML = møte.tider.map((tid, i) => `
+            document.getElementById('editTider').innerHTML = møter[currentMøteId].tider.map((tid, i) => `
                 <div class="tid-slot">
                     <input type="datetime-local" value="${tid}" onchange="oppdaterTid(${i}, this.value)">
                     <button class="btn-fare" onclick="fjernTid(${i})">Fjern</button>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
-        window.oppdaterTid = (index, value) => {
-            møter[currentMøteId].tider[index] = value;
-        };
-
-        window.leggTilTid = () => {
-            møter[currentMøteId].tider.push('');
-            renderEditTider();
-        };
-
-        window.fjernTid = (index) => {
-            møter[currentMøteId].tider.splice(index, 1);
-            renderEditTider();
-        };
+        window.oppdaterTid = (i, v) => { møter[currentMøteId].tider[i] = v; };
+        window.leggTilTid = () => { møter[currentMøteId].tider.push(''); renderEditTider(); };
+        window.fjernTid = i => { møter[currentMøteId].tider.splice(i, 1); renderEditTider(); };
 
         window.lagreMøte = async () => {
             const møte = møter[currentMøteId];
             møte.tittel = document.getElementById('editTittel').value;
             møte.beskrivelse = document.getElementById('editBeskrivelse').value;
             møte.tider = møte.tider.filter(t => t);
+            if (!møte.tittel || møte.tider.length === 0) { alert('Fyll inn tittel og minst én tid'); return; }
 
-            if (!møte.tittel || møte.tider.length === 0) {
-                alert('Fyll inn tittel og minst en tid');
-                return;
-            }
-
-            let møteId = currentMøteId;
-            if (currentMøteId.startsWith('ny_')) {
-                møteId = Date.now().toString();
-            }
-
+            const nyId = currentMøteId.startsWith('ny_') ? Date.now().toString() : currentMøteId;
             møte.uid = currentUser.uid;
 
             try {
-                await setDoc(doc(db, 'schedule_møter', møteId), møte);
-                møter[møteId] = møte;
-                if (currentMøteId.startsWith('ny_')) {
-                    delete møter[currentMøteId];
-                    currentMøteId = møteId;
-                }
+                await setDoc(doc(db, 'schedule_møter', nyId), møte);
+                if (currentMøteId.startsWith('ny_')) { delete møter[currentMøteId]; currentMøteId = nyId; }
                 renderMøteListe();
                 renderMøteDetaljer(currentMøteId);
-            } catch(e) {
-                alert('Feil ved lagring: ' + e.message);
-            }
+            } catch(e) { alert('Feil: ' + e.message); }
         };
 
-        window.avbrytRedigering = () => {
-            if (currentMøteId.startsWith('ny_')) {
+        window.avbryt = () => {
+            if (currentMøteId?.startsWith('ny_')) {
                 delete møter[currentMøteId];
                 currentMøteId = null;
                 renderMøteListe();
@@ -880,82 +657,67 @@
             }
         };
 
-        window.redigerMøte = (møteId) => {
-            currentMøteId = møteId;
-            renderMøteDetaljer(møteId);
+        window.slettMøte = async id => {
+            if (!confirm('Slett dette møtet?')) return;
+            try {
+                await deleteDoc(doc(db, 'schedule_møter', id));
+                delete møter[id];
+                currentMøteId = null;
+                renderMøteListe();
+                document.getElementById('detaljSection').classList.remove('vis');
+            } catch(e) { alert('Feil: ' + e.message); }
         };
 
-        window.slettMøte = async (møteId) => {
-            if (confirm('Slett dette møtet?')) {
-                try {
-                    await deleteDoc(doc(db, 'schedule_møter', møteId));
-                    delete møter[møteId];
-                    currentMøteId = null;
-                    renderMøteListe();
-                    document.getElementById('detaljSection').classList.remove('vis');
-                } catch(e) {
-                    alert('Feil ved sletting: ' + e.message);
-                }
-            }
-        };
-
-        window.kopierLink = (link) => {
+        window.kopierLink = link => {
             navigator.clipboard.writeText(link);
             alert('Lenke kopiert!');
         };
 
-        // Deltaker Panel
-        async function vissDeltakerPanel(møteId) {
-            const adminPanel = document.getElementById('adminPanel');
-            const deltakerPanel = document.getElementById('deltakerPanel');
-            const header = document.getElementById('header');
+        // ── Deltaker funksjoner ──
 
-            adminPanel.classList.remove('aktiv');
-            deltakerPanel.classList.add('aktiv');
-            header.style.display = 'none';
-
+        async function visDeltakerPanel(møteId) {
             try {
                 const snap = await getDoc(doc(db, 'schedule_møter', møteId));
-                if (snap.exists()) {
-                    const møte = snap.data();
-                    document.getElementById('deltakerMøteTittel').textContent = møte.tittel;
-                    document.getElementById('deltakerMøteBeskrivelse').textContent = møte.beskrivelse || '';
-
-                    const container = document.getElementById('deltakerTiderContainer');
-                    container.innerHTML = møte.tider.map(tid => {
-                        const formatted = new Date(tid).toLocaleString('no-NO', {
-                            weekday: 'long', year: 'numeric', month: 'long',
-                            day: 'numeric', hour: '2-digit', minute: '2-digit'
-                        });
-
-                        let jaCount = 0, neiCount = 0;
-                        Object.values(møte.stemmer || {}).forEach(stemmer => {
-                            if (stemmer[tid] === 'ja') jaCount++;
-                            if (stemmer[tid] === 'nei') neiCount++;
-                        });
-
-                        return `
-                            <div class="tid-kort">
-                                <div class="tid-header">
-                                    <div class="tid-tekst">${formatted}</div>
-                                    <div class="tid-stemmer">Kan: ${jaCount} · Kan ikke: ${neiCount}</div>
-                                </div>
-                                <div class="stemme-knapp-gruppe">
-                                    <button class="stemme-knapp" onclick="submitStemme('${møteId}', '${tid}', 'ja')">✓ Kan</button>
-                                    <button class="stemme-knapp" onclick="submitStemme('${møteId}', '${tid}', 'nei')">✗ Kan ikke</button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-
-                    container.innerHTML += '<div class="suksess-melding">✓ Stemmene dine er lagret</div>';
+                if (!snap.exists()) {
+                    document.getElementById('deltakerTiderContainer').innerHTML = '<p style="color:var(--tekst-sek);">Møte ikke funnet.</p>';
+                    return;
                 }
+                const møte = snap.data();
+                document.getElementById('deltakerMøteTittel').textContent = møte.tittel;
+                document.getElementById('deltakerMøteBeskrivelse').textContent = møte.beskrivelse || '';
+
+                oppdaterDeltakerTider(møteId, møte);
             } catch(e) {
-                alert('Møte ikke funnet');
+                console.error(e);
             }
         }
 
-        window.submitStemme = async (møteId, tid, stemme) => {
+        function oppdaterDeltakerTider(møteId, møte) {
+            const navn = localStorage.getItem('deltaker_navn_' + møteId) || null;
+            const stemmer = møte.stemmer || {};
+
+            document.getElementById('deltakerTiderContainer').innerHTML =
+                møte.tider.map(tid => {
+                    const formatted = new Date(tid).toLocaleString('no-NO', {
+                        weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
+                    });
+                    let ja = 0, nei = 0;
+                    Object.values(stemmer).forEach(s => { if (s[tid]==='ja') ja++; if (s[tid]==='nei') nei++; });
+                    const minStemme = navn ? (stemmer[navn]?.[tid] || null) : null;
+
+                    return `<div class="tid-kort">
+                        <div class="tid-tekst">${formatted}</div>
+                        <div class="tid-stemmer">Kan: ${ja} · Kan ikke: ${nei}</div>
+                        <div class="stemme-knapp-gruppe">
+                            <button class="stemme-knapp ${minStemme==='ja'?'valgt':''}" onclick="stem('${møteId}','${tid}','ja')">✓ Kan</button>
+                            <button class="stemme-knapp ${minStemme==='nei'?'valgt':''}" onclick="stem('${møteId}','${tid}','nei')">✗ Kan ikke</button>
+                        </div>
+                    </div>`;
+                }).join('') +
+                (navn ? '<div class="suksess-melding">✓ Stemmene dine er lagret</div>' : '');
+        }
+
+        window.stem = async (møteId, tid, stemme) => {
             let navn = localStorage.getItem('deltaker_navn_' + møteId);
             if (!navn) {
                 navn = prompt('Hva heter du?');
@@ -969,25 +731,10 @@
                 if (!møte.stemmer) møte.stemmer = {};
                 if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
                 møte.stemmer[navn][tid] = stemme;
-
                 await setDoc(doc(db, 'schedule_møter', møteId), møte);
-                vissDeltakerPanel(møteId);
-            } catch(e) {
-                alert('Feil ved stemming: ' + e.message);
-            }
+                oppdaterDeltakerTider(møteId, møte);
+            } catch(e) { alert('Feil: ' + e.message); }
         };
-
-        // Sjekk URL først - hvis møte i URL, vis deltaker direkte
-        const params = new URLSearchParams(window.location.search);
-        const møteIdFromUrl = params.get('møte');
-
-        if (møteIdFromUrl) {
-            // Vis deltaker-panelet direkte, skjul login
-            document.getElementById('loginOverlay').style.display = 'none';
-            vissDeltakerPanel(møteIdFromUrl);
-        }
-
-        window.vissDeltakerPanel = vissDeltakerPanel;
     </script>
 </body>
 </html>
