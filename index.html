@@ -977,14 +977,15 @@
             }
         };
 
-        // Sjekk URL
-        window.addEventListener('load', () => {
-            const params = new URLSearchParams(window.location.search);
-            const møteId = params.get('møte');
-            if (møteId) {
-                vissDeltakerPanel(møteId);
-            }
-        });
+        // Sjekk URL først - hvis møte i URL, vis deltaker direkte
+        const params = new URLSearchParams(window.location.search);
+        const møteIdFromUrl = params.get('møte');
+
+        if (møteIdFromUrl) {
+            // Vis deltaker-panelet direkte, skjul login
+            document.getElementById('loginOverlay').style.display = 'none';
+            vissDeltakerPanel(møteIdFromUrl);
+        }
 
         window.vissDeltakerPanel = vissDeltakerPanel;
     </script>
