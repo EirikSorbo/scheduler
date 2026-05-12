@@ -233,12 +233,17 @@
         .møte-header p { color: var(--tekst-sek); font-size: 0.95em; }
 
         .tid-kort {
-            background: var(--hvit); padding: 20px;
-            border-radius: var(--r); margin-bottom: 16px;
+            background: var(--hvit); padding: 12px 16px;
+            border-radius: var(--r); margin-bottom: 10px;
             border: 1px solid var(--kant); border-left: 4px solid var(--primær);
         }
-        .tid-tekst { font-weight: 700; color: var(--tekst); font-size: 1.05em; margin-bottom: 4px; font-family: 'Syne', sans-serif; }
-        .tid-stemmer { font-size: 0.9em; color: var(--tekst-sek); margin-bottom: 16px; }
+        .tid-rad {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .tid-tekst { font-weight: 700; color: var(--tekst); font-size: 1em; font-family: 'Syne', sans-serif; }
+        .tid-stemmer { font-size: 0.85em; color: var(--tekst-sek); white-space: nowrap; margin-left: 12px; }
 
         .stemme-knapp-gruppe { display: flex; gap: 8px; }
         .stemme-knapp {
@@ -281,6 +286,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.01</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -290,7 +296,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule</div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.01</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -334,6 +340,17 @@
                     <h2 id="deltakerMøteTittel"></h2>
                     <p id="deltakerMøteBeskrivelse"></p>
                 </div>
+
+                <!-- Navnefelt -->
+                <div class="kort" id="navneKort" style="margin-bottom:16px;">
+                    <div class="kort-innhold" style="display:flex;gap:12px;align-items:flex-end;">
+                        <div style="flex:1;">
+                            <label>Ditt navn</label>
+                            <input type="text" id="deltakerNavnInput" placeholder="Skriv ditt navn her..." oninput="oppdaterNavn()">
+                        </div>
+                    </div>
+                </div>
+
                 <div id="deltakerTiderContainer"></div>
             </div>
         </main>
@@ -461,7 +478,7 @@
         window.opprettNyttMøte = () => {
             currentMøteId = 'ny_' + Date.now();
             redigeringsModus = true;
-            møter[currentMøteId] = { tittel: '', beskrivelse: '', tider: [''], stemmer: {} };
+            møter[currentMøteId] = { tittel: '', beskrivelse: '', varighet: 60, tider: [''], stemmer: {} };
             renderMøteListe();
             visSkjema(currentMøteId);
         };
@@ -510,6 +527,10 @@
                     ${møte.tider.map(tid => `<div style="padding:8px;background:var(--primær-lys);border-radius:6px;margin-bottom:8px;">${new Date(tid).toLocaleString('no-NO', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })}</div>`).join('')}
                 </div>
                 <div class="form-gruppe">
+                    <label>Varighet</label>
+                    <div style="padding:8px;background:var(--primær-lys);border-radius:6px;">${varighetTekst(møte.varighet)}</div>
+                </div>
+                <div class="form-gruppe">
                     <label>Stemmeresultater</label>
                     ${tabell}
                 </div>
@@ -537,6 +558,18 @@
                     <textarea id="editBeskrivelse" placeholder="Noen ord om møtet...">${møte.beskrivelse || ''}</textarea>
                 </div>
                 <div class="form-gruppe">
+                    <label>Varighet</label>
+                    <select id="editVarighet" style="width:100%;padding:10px 12px;border:2px solid var(--kant);border-radius:var(--rs);font-size:0.95em;font-family:'Nunito',sans-serif;">
+                        <option value="15">15 minutter</option>
+                        <option value="30">30 minutter</option>
+                        <option value="45">45 minutter</option>
+                        <option value="60" selected>1 time</option>
+                        <option value="90">1,5 time</option>
+                        <option value="120">2 timer</option>
+                        <option value="180">3 timer</option>
+                    </select>
+                </div>
+                <div class="form-gruppe">
                     <label>Møtetider</label>
                     <div class="tider-container" id="editTider"></div>
                     <button class="btn-sekundær" onclick="leggTilTid()" style="width:100%;margin-top:8px;">+ Legg til tid</button>
@@ -547,6 +580,9 @@
                 </div>`;
 
             renderEditTider();
+            // Sett riktig varighet
+            const varighetEl = document.getElementById('editVarighet');
+            if (varighetEl) varighetEl.value = møte.varighet || 60;
         }
 
         window.redigerMøte = id => {
@@ -572,6 +608,7 @@
             const møte = møter[currentMøteId];
             møte.tittel = document.getElementById('editTittel').value.trim();
             møte.beskrivelse = document.getElementById('editBeskrivelse').value.trim();
+            møte.varighet = parseInt(document.getElementById('editVarighet').value);
             møte.tider = møte.tider.filter(t => t);
 
             if (!møte.tittel || møte.tider.length === 0) {
@@ -627,6 +664,14 @@
             alert('Lenke kopiert!');
         };
 
+        function varighetTekst(min) {
+            if (!min) return '1 time';
+            if (min < 60) return min + ' minutter';
+            if (min === 60) return '1 time';
+            if (min % 60 === 0) return (min / 60) + ' timer';
+            return Math.floor(min/60) + ',' + (min%60/60*10) + ' time';
+        }
+
         // ── Deltaker: Last panel ──
         async function lastDeltakerPanel(møteId) {
             try {
@@ -639,6 +684,13 @@
                 const møte = snap.data();
                 document.getElementById('deltakerMøteTittel').textContent = møte.tittel;
                 document.getElementById('deltakerMøteBeskrivelse').textContent = møte.beskrivelse || '';
+
+                // Fyll inn lagret navn hvis det finnes
+                const lagretNavn = localStorage.getItem('deltaker_navn_' + møteId);
+                if (lagretNavn) {
+                    document.getElementById('deltakerNavnInput').value = lagretNavn;
+                }
+
                 renderDeltakerTider(møteId, møte);
             } catch(e) {
                 document.getElementById('deltakerTiderContainer').innerHTML =
@@ -646,6 +698,18 @@
                 console.error(e);
             }
         }
+
+        // Oppdater navn fra felt
+        window.oppdaterNavn = () => {
+            const navn = document.getElementById('deltakerNavnInput').value.trim();
+            if (navn) {
+                localStorage.setItem('deltaker_navn_' + møteIdFraUrl, navn);
+            }
+            // Re-render for å vise/skjule valgte stemmer
+            getDoc(doc(db, 'schedule_moter', møteIdFraUrl)).then(snap => {
+                if (snap.exists()) renderDeltakerTider(møteIdFraUrl, snap.data());
+            });
+        };
 
         function renderDeltakerTider(møteId, møte) {
             const navn    = localStorage.getItem('deltaker_navn_' + møteId) || null;
@@ -668,8 +732,10 @@
                     const tidEscaped = tid.replace(/'/g, "\\'");
 
                     return `<div class="tid-kort">
-                        <div class="tid-tekst">${formatted}</div>
-                        <div class="tid-stemmer">Kan: ${ja} · Kan ikke: ${nei}</div>
+                        <div class="tid-rad">
+                            <div class="tid-tekst">${formatted} <span style="font-size:0.8em;font-weight:400;color:var(--tekst-sek);">(${varighetTekst(møte.varighet)})</span></div>
+                            <div class="tid-stemmer">✓ ${ja} · ✗ ${nei}</div>
+                        </div>
                         <div class="stemme-knapp-gruppe">
                             <button class="stemme-knapp ${minStemme==='ja'?'valgt':''}" onclick="stem('${møteId}','${tidEscaped}','ja')">✓ Kan</button>
                             <button class="stemme-knapp ${minStemme==='nei'?'valgt':''}" onclick="stem('${møteId}','${tidEscaped}','nei')">✗ Kan ikke</button>
@@ -680,13 +746,14 @@
         }
 
         window.stem = async (møteId, tid, stemme) => {
-            let navn = localStorage.getItem('deltaker_navn_' + møteId);
+            const navn = document.getElementById('deltakerNavnInput').value.trim();
             if (!navn) {
-                navn = prompt('Hva heter du?');
-                if (!navn || !navn.trim()) return;
-                navn = navn.trim();
-                localStorage.setItem('deltaker_navn_' + møteId, navn);
+                document.getElementById('deltakerNavnInput').focus();
+                document.getElementById('deltakerNavnInput').style.borderColor = '#f87171';
+                setTimeout(() => document.getElementById('deltakerNavnInput').style.borderColor = '', 2000);
+                return;
             }
+            localStorage.setItem('deltaker_navn_' + møteId, navn);
 
             try {
                 const snap = await getDoc(doc(db, 'schedule_moter', møteId));
