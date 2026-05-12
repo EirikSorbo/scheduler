@@ -231,7 +231,8 @@
         .timeplan-slot:last-child { border-bottom: none; }
         .timeplan-slot:hover { background: var(--primær-lys); }
         .timeplan-slot.hel-time { border-bottom: 2px solid var(--primær-mid); }
-        .timeplan-slot.stiplet { border-bottom: 1px dashed rgba(212,210,238,0.5); }
+        .timeplan-slot.halvtime { border-bottom: 1px solid var(--kant); }
+        .timeplan-slot.stiplet { border-bottom: 1px dashed rgba(148,144,212,0.3); }
         .timeplan-tid {
             width: 48px; min-width: 48px;
             font-size: 11px; color: var(--tekst-sek);
@@ -399,6 +400,7 @@
             /* ── Timeplan: større touchmål ── */
             .timeplan-slot { height: 32px; }
             .timeplan-slot.hel-time { border-bottom: 2px solid var(--primær-mid); }
+            .timeplan-slot.stiplet { border-bottom: 1px dashed rgba(148,144,212,0.3); }
             .timeplan-wrapper { height: 320px; }
             .timeplan-tid { font-size: 12px; padding: 6px; width: 44px; min-width: 44px; }
 
@@ -428,7 +430,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.11</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.12</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -438,7 +440,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.11</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.12</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -894,8 +896,9 @@
                 const erHalvTime = min === 30;
                 const erStiplet = min === 15 || min === 45;
                 const visLabel = erHelTime || erHalvTime;
+                const slotKlasse = erHelTime ? 'hel-time' : erStiplet ? 'stiplet' : 'halvtime';
 
-                html += `<div class="timeplan-slot ${erHelTime?'hel-time':''} ${erStiplet?'stiplet':''}" onclick="toggleTid('${iso}')">
+                html += `<div class="timeplan-slot ${slotKlasse}" onclick="toggleTid('${iso}')">
                     <div class="timeplan-tid">${visLabel ? tidStr : ''}</div>
                     <div class="timeplan-innhold"></div>
                 </div>`;
