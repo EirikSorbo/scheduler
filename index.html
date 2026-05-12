@@ -673,7 +673,12 @@
         }
 
         // Google Sign-In
-        window.onload = function() {
+        function initGoogle() {
+            if (!window.google) {
+                setTimeout(initGoogle, 100);
+                return;
+            }
+
             google.accounts.id.initialize({
                 client_id: '547633808881-uviu4brm7mck2bk56tqstmhmp7sfp3nc.apps.googleusercontent.com',
                 callback: håndterLogin
@@ -683,7 +688,10 @@
                 document.getElementById('google-signin'),
                 { theme: 'outline', size: 'large' }
             );
+        }
 
+        window.onload = function() {
+            initGoogle();
             sjekkUrl();
         };
 
@@ -735,7 +743,7 @@
             document.getElementById('loginPanel').classList.remove('aktiv');
             document.getElementById('adminPanel').classList.remove('aktiv');
             document.getElementById('deltakerPanel').classList.add('aktiv');
-            document.getElementById('header').style.display = 'none');
+            document.getElementById('header').style.display = 'none';
             renderDeltakerPanel(møteId);
         }
 
