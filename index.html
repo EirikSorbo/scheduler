@@ -184,6 +184,77 @@
         .tid-slot:last-child { margin-bottom: 0; }
         .tid-slot input { flex: 1; }
 
+        /* ── Timeplan ── */
+        .timeplan-nav {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .timeplan-dato {
+            font-family: 'Syne', sans-serif; font-weight: 700;
+            font-size: 14px; color: var(--tekst);
+            text-transform: capitalize;
+        }
+        .timeplan-nav-knapp {
+            background: var(--hvit); border: 1px solid var(--kant);
+            border-radius: var(--rs); width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--tekst-sek); font-size: 16px;
+            transition: all 0.15s;
+        }
+        .timeplan-nav-knapp:hover { background: var(--primær-lys); color: var(--primær); border-color: var(--primær-mid); }
+
+        .timeplan-grid {
+            position: relative;
+            border: 1px solid var(--kant);
+            border-radius: var(--rs);
+            overflow: hidden;
+            background: var(--hvit);
+        }
+        .timeplan-slot {
+            display: flex; align-items: flex-start;
+            height: 24px;
+            border-bottom: 1px solid var(--kant);
+            cursor: pointer;
+            transition: background 0.1s;
+            position: relative;
+        }
+        .timeplan-slot:last-child { border-bottom: none; }
+        .timeplan-slot:hover { background: var(--primær-lys); }
+        .timeplan-slot.hel-time { border-bottom: 1px solid var(--primær-mid); }
+        .timeplan-tid {
+            width: 48px; min-width: 48px;
+            font-size: 11px; color: var(--tekst-sek);
+            padding: 3px 6px; font-weight: 600;
+            font-family: 'Syne', sans-serif;
+            border-right: 1px solid var(--kant);
+            background: var(--primær-lys);
+        }
+        .timeplan-slot.hel-time .timeplan-tid { color: var(--primær); }
+        .timeplan-innhold { flex: 1; position: relative; }
+
+        .timeplan-blokk {
+            position: absolute;
+            left: 4px; right: 4px;
+            background: var(--primær);
+            border-radius: 4px;
+            z-index: 2;
+            cursor: pointer;
+            display: flex; align-items: center;
+            padding: 0 8px;
+            font-size: 11px; font-weight: 700;
+            color: white; font-family: 'Syne', sans-serif;
+            transition: opacity 0.15s;
+            overflow: hidden;
+        }
+        .timeplan-blokk:hover { opacity: 0.85; }
+
+        .dato-varighet-rad {
+            display: flex; gap: 12px; margin-bottom: 20px;
+        }
+        .dato-varighet-rad .form-gruppe {
+            flex: 1; margin-bottom: 0;
+        }
+
         button {
             padding: 10px 16px; border: none; border-radius: var(--rs);
             font-size: 0.95em; font-weight: 600; cursor: pointer;
@@ -286,7 +357,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.01</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.02</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -296,7 +367,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.01</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.02</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -541,12 +612,24 @@
         }
 
         // ── Admin: Vis redigeringsskjema ──
+        let timeplanDato = new Date();
+        timeplanDato.setHours(0,0,0,0);
+
         function visSkjema(møteId) {
             const møte = møter[møteId];
             const erNy = møteId.startsWith('ny_');
 
             document.getElementById('detaljTittel').textContent = erNy ? 'Nytt møte' : 'Rediger møte';
             document.getElementById('detaljSection').classList.add('vis');
+
+            // Sett timeplanDato til første valgte tid, eller i dag
+            if (møte.tider && møte.tider.length > 0 && møte.tider[0]) {
+                timeplanDato = new Date(møte.tider[0]);
+                timeplanDato.setHours(0,0,0,0);
+            } else {
+                timeplanDato = new Date();
+                timeplanDato.setHours(0,0,0,0);
+            }
 
             document.getElementById('detaljInnhold').innerHTML = `
                 <div class="form-gruppe">
@@ -557,52 +640,144 @@
                     <label>Beskrivelse (valgfritt)</label>
                     <textarea id="editBeskrivelse" placeholder="Noen ord om møtet...">${møte.beskrivelse || ''}</textarea>
                 </div>
-                <div class="form-gruppe">
-                    <label>Varighet</label>
-                    <select id="editVarighet" style="width:100%;padding:10px 12px;border:2px solid var(--kant);border-radius:var(--rs);font-size:0.95em;font-family:'Nunito',sans-serif;">
-                        <option value="15">15 minutter</option>
-                        <option value="30">30 minutter</option>
-                        <option value="45">45 minutter</option>
-                        <option value="60" selected>1 time</option>
-                        <option value="90">1,5 time</option>
-                        <option value="120">2 timer</option>
-                        <option value="180">3 timer</option>
-                    </select>
+                <div class="dato-varighet-rad">
+                    <div class="form-gruppe">
+                        <label>Dato</label>
+                        <input type="date" id="editDato" value="${datoTilString(timeplanDato)}" onchange="byttDato(this.value)">
+                    </div>
+                    <div class="form-gruppe">
+                        <label>Varighet per møte</label>
+                        <select id="editVarighet" onchange="oppdaterTimeplan()" style="width:100%;padding:10px 12px;border:2px solid var(--kant);border-radius:var(--rs);font-size:0.95em;font-family:'Nunito',sans-serif;">
+                            <option value="15">15 min</option>
+                            <option value="30">30 min</option>
+                            <option value="45">45 min</option>
+                            <option value="60" ${(møte.varighet||60)===60?'selected':''}>1 time</option>
+                            <option value="90" ${(møte.varighet||60)===90?'selected':''}>1,5 time</option>
+                            <option value="120" ${(møte.varighet||60)===120?'selected':''}>2 timer</option>
+                            <option value="180" ${(møte.varighet||60)===180?'selected':''}>3 timer</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-gruppe">
-                    <label>Møtetider</label>
-                    <div class="tider-container" id="editTider"></div>
-                    <button class="btn-sekundær" onclick="leggTilTid()" style="width:100%;margin-top:8px;">+ Legg til tid</button>
+                    <label>Velg tidspunkter <span style="font-weight:400;color:var(--tekst-sek);">— klikk i timeplanen</span></label>
+                    <div class="timeplan-nav">
+                        <button class="timeplan-nav-knapp" onclick="endreTimeplanDag(-1)">←</button>
+                        <div class="timeplan-dato" id="timeplanDatoLabel"></div>
+                        <button class="timeplan-nav-knapp" onclick="endreTimeplanDag(1)">→</button>
+                    </div>
+                    <div class="timeplan-grid" id="timeplanGrid"></div>
                 </div>
                 <div class="knapp-gruppe">
                     <button class="btn-primær" onclick="lagreMøte()">Lagre</button>
                     <button class="btn-sekundær" onclick="avbryt()">Avbryt</button>
                 </div>`;
 
-            renderEditTider();
-            // Sett riktig varighet
             const varighetEl = document.getElementById('editVarighet');
             if (varighetEl) varighetEl.value = møte.varighet || 60;
+            oppdaterTimeplan();
         }
+
+        function datoTilString(dato) {
+            return dato.toISOString().split('T')[0];
+        }
+
+        window.byttDato = (verdi) => {
+            timeplanDato = new Date(verdi + 'T00:00:00');
+            oppdaterTimeplan();
+        };
+
+        window.endreTimeplanDag = (retning) => {
+            timeplanDato.setDate(timeplanDato.getDate() + retning);
+            document.getElementById('editDato').value = datoTilString(timeplanDato);
+            oppdaterTimeplan();
+        };
+
+        window.oppdaterTimeplan = () => {
+            const varighet = parseInt(document.getElementById('editVarighet')?.value || 60);
+            const slotMinutter = 15;
+            const startTime = 7 * 60;  // 07:00
+            const sluttTime = 21 * 60; // 21:00
+            const antallSlots = (sluttTime - startTime) / slotMinutter;
+            const slotHøyde = 24;
+            const blokkhøyde = (varighet / slotMinutter) * slotHøyde;
+
+            const datoLabel = timeplanDato.toLocaleDateString('no-NO', { weekday:'long', day:'numeric', month:'long' });
+            const labelEl = document.getElementById('timeplanDatoLabel');
+            if (labelEl) labelEl.textContent = datoLabel.charAt(0).toUpperCase() + datoLabel.slice(1);
+
+            const møte = møter[currentMøteId];
+            const tider = møte?.tider || [];
+
+            // Finn valgte slots for denne dagen
+            const dagStr = datoTilString(timeplanDato);
+            const valgtePåDenneDagen = tider.filter(t => t.startsWith(dagStr));
+
+            let html = '';
+            for (let i = 0; i < antallSlots; i++) {
+                const minutter = startTime + i * slotMinutter;
+                const time = Math.floor(minutter / 60);
+                const min = minutter % 60;
+                const tidStr = `${String(time).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+                const iso = `${dagStr}T${tidStr}`;
+                const erHelTime = min === 0;
+                const visLabel = erHelTime || min === 30;
+
+                html += `<div class="timeplan-slot ${erHelTime?'hel-time':''}" onclick="toggleTid('${iso}')">
+                    <div class="timeplan-tid">${visLabel ? tidStr : ''}</div>
+                    <div class="timeplan-innhold"></div>
+                </div>`;
+            }
+
+            const grid = document.getElementById('timeplanGrid');
+            if (!grid) return;
+            grid.innerHTML = html;
+
+            // Tegn blokker for valgte tider
+            valgtePåDenneDagen.forEach(tid => {
+                const tidDel = tid.split('T')[1];
+                if (!tidDel) return;
+                const [h, m] = tidDel.split(':').map(Number);
+                const minutterFraStart = (h * 60 + m) - startTime;
+                const slotIndex = minutterFraStart / slotMinutter;
+                const topPx = slotIndex * slotHøyde;
+
+                const blokk = document.createElement('div');
+                blokk.className = 'timeplan-blokk';
+                blokk.style.top = topPx + 'px';
+                blokk.style.height = (blokkhøyde - 2) + 'px';
+                blokk.textContent = tidDel.slice(0,5);
+                blokk.onclick = (e) => { e.stopPropagation(); toggleTid(tid); };
+
+                // Plasser blokken relativt til grid
+                grid.style.position = 'relative';
+                const innholdCeller = grid.querySelectorAll('.timeplan-innhold');
+                if (innholdCeller[slotIndex]) {
+                    innholdCeller[slotIndex].style.position = 'relative';
+                    innholdCeller[slotIndex].appendChild(blokk);
+                    blokk.style.top = '0';
+                    blokk.style.position = 'absolute';
+                }
+            });
+        };
+
+        window.toggleTid = (iso) => {
+            const møte = møter[currentMøteId];
+            if (!møte) return;
+            const idx = møte.tider.indexOf(iso);
+            if (idx >= 0) {
+                møte.tider.splice(idx, 1);
+            } else {
+                møte.tider.push(iso);
+                møte.tider.sort();
+            }
+            oppdaterTimeplan();
+        };
 
         window.redigerMøte = id => {
             currentMøteId = id;
             redigeringsModus = true;
             visSkjema(id);
         };
-
-        function renderEditTider() {
-            const møte = møter[currentMøteId];
-            document.getElementById('editTider').innerHTML = møte.tider.map((tid, i) => `
-                <div class="tid-slot">
-                    <input type="datetime-local" value="${tid}" onchange="oppdaterTid(${i}, this.value)">
-                    <button class="btn-fare" onclick="fjernTid(${i})">Fjern</button>
-                </div>`).join('');
-        }
-
-        window.oppdaterTid = (i, v) => { møter[currentMøteId].tider[i] = v; };
-        window.leggTilTid  = () => { møter[currentMøteId].tider.push(''); renderEditTider(); };
-        window.fjernTid    = i  => { møter[currentMøteId].tider.splice(i, 1); renderEditTider(); };
 
         window.lagreMøte = async () => {
             const møte = møter[currentMøteId];
