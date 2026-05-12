@@ -219,6 +219,7 @@
         .timeplan-slot:last-child { border-bottom: none; }
         .timeplan-slot:hover { background: var(--primær-lys); }
         .timeplan-slot.hel-time { border-bottom: 1px solid var(--primær-mid); }
+        .timeplan-slot.stiplet { border-bottom: 1px dashed var(--kant); }
         .timeplan-tid {
             width: 48px; min-width: 48px;
             font-size: 11px; color: var(--tekst-sek);
@@ -324,25 +325,25 @@
         .møte-header p { color: var(--tekst-sek); font-size: 0.95em; }
 
         .tid-kort {
-            background: var(--hvit); padding: 12px 16px;
-            border-radius: var(--r); margin-bottom: 10px;
+            background: var(--hvit); padding: 10px 14px;
+            border-radius: var(--r); margin-bottom: 8px;
             border: 1px solid var(--kant); border-left: 4px solid var(--primær);
         }
         .tid-rad {
             display: flex; align-items: center;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
-        .tid-tekst { font-weight: 700; color: var(--tekst); font-size: 1em; font-family: 'Syne', sans-serif; }
+        .tid-tekst { font-weight: 700; color: var(--tekst); font-size: 0.95em; font-family: 'Syne', sans-serif; }
         .tid-stemmer { font-size: 0.85em; color: var(--tekst-sek); white-space: nowrap; margin-left: 12px; }
 
-        .stemme-knapp-gruppe { display: flex; gap: 8px; }
+        .stemme-knapp-gruppe { display: flex; gap: 6px; }
         .stemme-knapp {
-            flex: 1; padding: 12px;
+            flex: 1; padding: 7px 10px;
             border: 2px solid var(--kant); background: var(--hvit);
             border-radius: var(--rs); cursor: pointer;
             font-weight: 700; transition: all 0.2s;
-            font-size: 0.95em; font-family: 'Syne', sans-serif;
+            font-size: 0.88em; font-family: 'Syne', sans-serif;
         }
         .stemme-knapp:hover { border-color: var(--primær); background: var(--primær-lys); }
         .stemme-knapp.valgt { background: var(--primær); color: white; border-color: var(--primær); }
@@ -377,7 +378,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.03</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.04</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -387,7 +388,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.03</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.04</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -433,11 +434,11 @@
                 </div>
 
                 <!-- Navnefelt -->
-                <div class="kort" id="navneKort" style="margin-bottom:16px;">
-                    <div class="kort-innhold" style="display:flex;gap:12px;align-items:flex-end;">
+                <div class="kort" id="navneKort" style="margin-bottom:12px;">
+                    <div class="kort-innhold" style="display:flex;gap:12px;align-items:flex-end;padding:12px 16px;">
                         <div style="flex:1;">
-                            <label>Ditt navn</label>
-                            <input type="text" id="deltakerNavnInput" placeholder="Skriv ditt navn her..." oninput="oppdaterNavn()">
+                            <label style="margin-bottom:4px;">Ditt navn</label>
+                            <input type="text" id="deltakerNavnInput" placeholder="Skriv ditt navn her..." oninput="oppdaterNavn()" style="padding:8px 12px;">
                         </div>
                     </div>
                 </div>
@@ -607,6 +608,10 @@
 
             document.getElementById('detaljInnhold').innerHTML = `
                 <div class="form-gruppe">
+                    <label>Stemmeresultater</label>
+                    ${tabell}
+                </div>
+                <div class="form-gruppe">
                     <label>Møte lenke</label>
                     <div class="deling-boks">
                         <input type="text" value="${link}" readonly>
@@ -626,10 +631,6 @@
                 <div class="form-gruppe">
                     <label>Varighet</label>
                     <div style="padding:8px;background:var(--primær-lys);border-radius:6px;">${varighetTekst(møte.varighet)}</div>
-                </div>
-                <div class="form-gruppe">
-                    <label>Stemmeresultater</label>
-                    ${tabell}
                 </div>
                 <div class="knapp-gruppe">
                     <button class="btn-sekundær" onclick="redigerMøte('${møteId}')">Rediger</button>
@@ -748,9 +749,11 @@
                 const tidStr = `${String(time).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
                 const iso = `${dagStr}T${tidStr}`;
                 const erHelTime = min === 0;
-                const visLabel = erHelTime || min === 30;
+                const erHalvTime = min === 30;
+                const erStiplet = min === 15 || min === 45;
+                const visLabel = erHelTime || erHalvTime;
 
-                html += `<div class="timeplan-slot ${erHelTime?'hel-time':''}" onclick="toggleTid('${iso}')">
+                html += `<div class="timeplan-slot ${erHelTime?'hel-time':''} ${erStiplet?'stiplet':''}" onclick="toggleTid('${iso}')">
                     <div class="timeplan-tid">${visLabel ? tidStr : ''}</div>
                     <div class="timeplan-innhold"></div>
                 </div>`;
