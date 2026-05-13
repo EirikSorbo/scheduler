@@ -125,7 +125,7 @@
         main { max-width: 1000px; margin: 0 auto; padding: 20px 12px 64px; }
 
         /* ── Admin Grid ── */
-        .admin-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .admin-grid { display: flex; flex-direction: column; gap: 20px; }
 
         .admin-toprad {
             display: flex;
@@ -150,21 +150,27 @@
             text-transform: uppercase; letter-spacing: 0.3px;
         }
 
-        .møte-liste { display: flex; flex-direction: column; }
+        .møte-liste {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px 16px;
+        }
 
         .møte-item {
-            padding: 13px 20px;
-            border-bottom: 1px solid var(--kant);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 2px solid var(--kant);
+            background: var(--hvit);
             cursor: pointer;
-            transition: background 0.15s;
-            border-left: 4px solid transparent;
+            transition: all 0.15s;
+            border-left: 2px solid var(--kant);
         }
-        .møte-item:last-child { border-bottom: none; }
-        .møte-item:hover { background: var(--primær-lys); }
-        .møte-item.aktiv { background: var(--primær-lys); border-left-color: var(--primær); }
+        .møte-item:hover { background: var(--primær-lys); border-color: var(--primær-mid); }
+        .møte-item.aktiv { background: var(--primær-lys); border-color: var(--primær); }
 
-        .møte-tittel { font-weight: 700; font-size: 14px; color: var(--tekst); margin-bottom: 4px; }
-        .møte-meta { font-size: 12px; color: var(--tekst-sek); }
+        .møte-tittel { font-weight: 700; font-size: 13px; color: var(--tekst); }
+        .møte-meta { font-size: 11px; color: var(--tekst-sek); margin-top: 2px; }
 
         .legg-til-knapp {
             background: var(--primær); color: white; border: none;
@@ -380,15 +386,12 @@
         }
 
         @media (max-width: 768px) {
-            .admin-grid { grid-template-columns: 1fr; }
             .knapp-gruppe { flex-direction: column; }
             .knapp-gruppe button { width: 100%; }
         }
 
         @media (max-width: 600px) {
             /* ── Admin: én panel om gangen ── */
-            .admin-grid { display: block; }
-
             #detaljSection { display: none !important; }
             #detaljSection.vis-mobil { display: block !important; }
             #møteKort { display: block; }
@@ -441,7 +444,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.15</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.16</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -451,7 +454,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.15</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.16</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
