@@ -385,6 +385,49 @@
             font-weight: 700; border: 2px solid var(--primær);
         }
 
+        .fritekst-kort {
+            background: var(--hvit); padding: 10px 14px;
+            border-radius: var(--r); margin-bottom: 8px;
+            border: 1px solid var(--kant); border-left: 4px solid var(--primær-mid);
+        }
+        .fritekst-tekst {
+            font-weight: 700; color: var(--tekst); font-size: 0.95em;
+            font-family: 'Syne', sans-serif; margin-bottom: 8px;
+        }
+        .velg-knapp {
+            width: 100%; padding: 8px 12px;
+            border: 2px solid var(--kant); background: var(--hvit);
+            border-radius: var(--rs); cursor: pointer;
+            font-weight: 700; transition: all 0.2s;
+            font-size: 0.88em; font-family: 'Syne', sans-serif;
+        }
+        .velg-knapp:hover { border-color: var(--primær); background: var(--primær-lys); }
+        .velg-knapp.valgt { background: var(--primær); color: white; border-color: var(--primær); }
+
+        .resultater-deltaker {
+            margin-top: 28px;
+            border-top: 2px solid var(--kant);
+            padding-top: 20px;
+        }
+        .resultater-deltaker-tittel {
+            font-family: 'Syne', sans-serif; font-weight: 700;
+            font-size: 13px; text-transform: uppercase;
+            letter-spacing: 0.4px; color: var(--tekst-sek);
+            margin-bottom: 12px;
+        }
+        .resultat-rad {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: var(--hvit);
+            border-radius: var(--rs);
+            border: 1px solid var(--kant);
+            margin-bottom: 6px;
+            font-size: 0.88em;
+        }
+        .resultat-tid { color: var(--tekst); font-weight: 600; }
+        .resultat-tall { color: var(--tekst-sek); }
+
         @media (max-width: 768px) {
             .knapp-gruppe { flex-direction: column; }
             .knapp-gruppe button { width: 100%; }
@@ -444,7 +487,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.19</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.20</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -454,7 +497,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.19</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.20</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -861,6 +904,11 @@
                         <div class="timeplan-grid" id="timeplanGrid"></div>
                     </div>
                 </div>
+                <div class="form-gruppe">
+                    <label>Fritekst-alternativ <span style="font-weight:400;color:var(--tekst-sek);">— valgfritt</span></label>
+                    <input type="text" id="editFritekst" placeholder="F.eks. «Jeg kan ikke noen av disse tidene»" value="${møte.fritekstAlternativ || ''}">
+                    <div style="font-size:12px;color:var(--tekst-sek);margin-top:4px;">Vises nederst for deltakere med en «Velg dette»-knapp.</div>
+                </div>
                 <div class="knapp-gruppe">
                     <button class="btn-primær" onclick="lagreMøte()">Lagre</button>
                     <button class="btn-sekundær" onclick="avbryt()">Avbryt</button>
@@ -999,6 +1047,7 @@
             møte.tittel = document.getElementById('editTittel').value.trim();
             møte.beskrivelse = document.getElementById('editBeskrivelse').value.trim();
             møte.varighet = parseInt(document.getElementById('editVarighet').value);
+            møte.fritekstAlternativ = document.getElementById('editFritekst')?.value.trim() || '';
             møte.tider = møte.tider.filter(t => t);
 
             if (!møte.tittel || møte.tider.length === 0) {
@@ -1122,34 +1171,89 @@
             const navn    = localStorage.getItem('deltaker_navn_' + møteId) || null;
             const stemmer = møte.stemmer || {};
 
-            document.getElementById('deltakerTiderContainer').innerHTML =
-                møte.tider.map(tid => {
-                    const formatted = new Date(tid).toLocaleString('no-NO', {
-                        weekday:'long', year:'numeric', month:'long',
-                        day:'numeric', hour:'2-digit', minute:'2-digit'
-                    });
-                    let ja = 0, nei = 0;
-                    Object.values(stemmer).forEach(s => {
-                        if (s[tid] === 'ja') ja++;
-                        if (s[tid] === 'nei') nei++;
-                    });
-                    const minStemme = navn ? (stemmer[navn]?.[tid] || null) : null;
+            // Vanlige tid-kort
+            const tiderHtml = møte.tider.map(tid => {
+                const formatted = new Date(tid).toLocaleString('no-NO', {
+                    weekday:'long', year:'numeric', month:'long',
+                    day:'numeric', hour:'2-digit', minute:'2-digit'
+                });
+                const slutt = new Date(new Date(tid).getTime() + (møte.varighet||60)*60000);
+                const sluttStr = slutt.toLocaleString('no-NO', {hour:'2-digit', minute:'2-digit'});
+                let ja = 0, nei = 0;
+                Object.values(stemmer).forEach(s => {
+                    if (s[tid] === 'ja') ja++;
+                    if (s[tid] === 'nei') nei++;
+                });
+                const minStemme = navn ? (stemmer[navn]?.[tid] || null) : null;
+                const tidEscaped = tid.replace(/'/g, "\\'");
 
-                    // Escape tid for bruk i onclick-attributt
-                    const tidEscaped = tid.replace(/'/g, "\\'");
+                return `<div class="tid-kort">
+                    <div class="tid-rad">
+                        <div class="tid-tekst">${formatted}–${sluttStr}</div>
+                        <div class="tid-stemmer">✓ ${ja} · ✗ ${nei}</div>
+                    </div>
+                    <div class="stemme-knapp-gruppe">
+                        <button class="stemme-knapp ${minStemme==='ja'?'valgt':''}" onclick="stem('${møteId}','${tidEscaped}','ja')">Kan</button>
+                        <button class="stemme-knapp ${minStemme==='nei'?'valgt':''}" onclick="stem('${møteId}','${tidEscaped}','nei')">Kan ikke</button>
+                    </div>
+                </div>`;
+            }).join('');
 
-                    return `<div class="tid-kort">
-                        <div class="tid-rad">
-                            <div class="tid-tekst">${formatted} <span style="font-size:0.8em;font-weight:400;color:var(--tekst-sek);">(${varighetTekst(møte.varighet)})</span></div>
-                            <div class="tid-stemmer">✓ ${ja} · ✗ ${nei}</div>
-                        </div>
-                        <div class="stemme-knapp-gruppe">
-                            <button class="stemme-knapp ${minStemme==='ja'?'valgt':''}" onclick="stem('${møteId}','${tidEscaped}','ja')">Kan</button>
-                            <button class="stemme-knapp ${minStemme==='nei'?'valgt':''}" onclick="stem('${møteId}','${tidEscaped}','nei')">Kan ikke</button>
-                        </div>
+            // Fritekst-alternativ
+            let fritekstHtml = '';
+            if (møte.fritekstAlternativ) {
+                const nøkkel = '__fritekst__';
+                const nøkkelEscaped = nøkkel.replace(/'/g, "\\'");
+                const erValgt = navn ? (stemmer[navn]?.[nøkkel] === 'valgt') : false;
+                const antallValgt = Object.values(stemmer).filter(s => s[nøkkel] === 'valgt').length;
+                fritekstHtml = `<div class="fritekst-kort">
+                    <div class="fritekst-tekst">${møte.fritekstAlternativ}</div>
+                    <div style="font-size:0.82em;color:var(--tekst-sek);margin-bottom:8px;">${antallValgt > 0 ? antallValgt + ' har valgt dette' : ''}</div>
+                    <button class="velg-knapp ${erValgt?'valgt':''}" onclick="stem('${møteId}','${nøkkelEscaped}','valgt')">${erValgt ? '✓ Valgt' : 'Velg dette'}</button>
+                </div>`;
+            }
+
+            // Resultater for deltaker
+            const antallDeltakere = Object.keys(stemmer).length;
+            let resultatHtml = '';
+            if (antallDeltakere > 0 && navn) {
+                const jaPerTid = {};
+                møte.tider.forEach(tid => {
+                    jaPerTid[tid] = Object.values(stemmer).filter(s => s[tid] === 'ja').length;
+                });
+                const maxJa = Math.max(...Object.values(jaPerTid), 0);
+                const alleKan = møte.tider.filter(t => jaPerTid[t] === antallDeltakere);
+
+                let toppTekst = '';
+                if (alleKan.length > 0) {
+                    toppTekst = `<div style="background:#d1fae5;border:1px solid #6ee7b7;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:0.88em;">✅ <strong>Alle kan:</strong> ${alleKan.map(t => new Date(t).toLocaleString('no-NO',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})).join(', ')}</div>`;
+                } else if (maxJa > 0) {
+                    toppTekst = `<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:0.88em;">⚡ <strong>Flest kan (${maxJa}/${antallDeltakere})</strong></div>`;
+                }
+
+                const rader = møte.tider.map(tid => {
+                    const s = new Date(tid);
+                    const fmt = d => d.toLocaleString('no-NO',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+                    const ja = jaPerTid[tid] || 0;
+                    const nei = Object.values(stemmer).filter(s2 => s2[tid] === 'nei').length;
+                    const farge = ja === antallDeltakere ? '#d1fae5' : ja === maxJa && ja > 0 ? '#fef3c7' : 'var(--hvit)';
+                    return `<div class="resultat-rad" style="background:${farge};">
+                        <div class="resultat-tid">${fmt(s)}</div>
+                        <div class="resultat-tall">✓ ${ja} · ✗ ${nei}</div>
                     </div>`;
-                }).join('')
-                + (navn ? '<div class="suksess-melding">✓ Stemmene dine er lagret</div>' : '');
+                }).join('');
+
+                resultatHtml = `<div class="resultater-deltaker">
+                    <div class="resultater-deltaker-tittel">Oversikt</div>
+                    ${toppTekst}
+                    ${rader}
+                </div>`;
+            }
+
+            const suksess = navn ? '<div class="suksess-melding">✓ Stemmene dine er lagret</div>' : '';
+
+            document.getElementById('deltakerTiderContainer').innerHTML =
+                tiderHtml + fritekstHtml + suksess + resultatHtml;
         }
 
         window.stem = async (møteId, tid, stemme) => {
