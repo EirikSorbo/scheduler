@@ -397,19 +397,19 @@
             #møteKort { display: block; }
             #møteKort.skjult-mobil { display: none; }
 
-            .mobil-tilbake {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                background: none;
-                border: none;
-                color: var(--primær);
-                font-family: 'Syne', sans-serif;
-                font-weight: 700;
-                font-size: 14px;
-                padding: 0 0 12px 0;
-                cursor: pointer;
-            }
+        .mobil-tilbake {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: none;
+            border: none;
+            color: var(--primær);
+            font-family: 'Syne', sans-serif;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 0 0 16px 0;
+            cursor: pointer;
+        }
 
             /* ── Timeplan: større touchmål ── */
             .timeplan-slot { height: 32px; }
@@ -444,7 +444,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.17</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.19</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -454,7 +454,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.17</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.19</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -610,6 +610,7 @@
                             currentMøteId = nyesteId;
                             renderMøteListe();
                             renderMøteDetaljer(nyesteId);
+                            if (erMobil()) visMobilDetalj();
                         }
                     }
                 });
@@ -629,7 +630,7 @@
             const ids = Object.keys(møter).filter(id => !id.startsWith('ny_'));
 
             if (ids.length === 0) {
-                liste.innerHTML = '<div class="tom-melding">Ingen møter ennå</div>';
+                liste.innerHTML = '<div class="tom-melding">Ingen møter under planlegging</div>';
                 if (!currentMøteId?.startsWith('ny_')) {
                     document.getElementById('detaljSection').classList.remove('vis');
                 }
@@ -670,6 +671,8 @@
         window.mobilTilbake = () => {
             currentMøteId = null;
             redigeringsModus = false;
+            document.getElementById('detaljSection').classList.remove('vis');
+            renderMøteListe();
             visMobilListe();
         };
 
@@ -767,6 +770,7 @@
             }
 
             document.getElementById('detaljInnhold').innerHTML = `
+                <button class="mobil-tilbake" onclick="mobilTilbake()">← Tilbake</button>
                 <div class="form-gruppe">
                     <label>Stemmeresultater</label>
                     ${tabell}
@@ -819,6 +823,7 @@
             }
 
             document.getElementById('detaljInnhold').innerHTML = `
+                <button class="mobil-tilbake" onclick="mobilTilbake()">← Tilbake</button>
                 <div class="form-gruppe">
                     <label>Tittel</label>
                     <input type="text" id="editTittel" placeholder="F.eks. Teammøte" value="${møte.tittel || ''}">
@@ -1041,6 +1046,7 @@
                 redigeringsModus = false;
                 renderMøteListe();
                 document.getElementById('detaljSection').classList.remove('vis');
+                if (erMobil()) visMobilListe();
             } catch(e) { alert('Feil ved sletting: ' + e.message); }
         };
 
