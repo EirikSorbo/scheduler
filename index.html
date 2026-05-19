@@ -213,7 +213,87 @@
         .tid-slot:last-child { margin-bottom: 0; }
         .tid-slot input { flex: 1; }
 
-        /* ── Timeplan ── */
+        /* ── Hendelsestype-toggle ── */
+        .type-toggle {
+            display: flex; gap: 0;
+            border: 2px solid var(--kant);
+            border-radius: var(--rs);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        .type-toggle button {
+            flex: 1; padding: 9px 16px;
+            border: none; border-radius: 0;
+            background: var(--hvit); color: var(--tekst-sek);
+            font-family: 'Syne', sans-serif; font-weight: 700;
+            font-size: 12px; text-transform: uppercase;
+            letter-spacing: 0.4px; cursor: pointer;
+            transition: all 0.15s;
+        }
+        .type-toggle button:first-child { border-right: 2px solid var(--kant); }
+        .type-toggle button.aktiv { background: var(--primær); color: white; }
+        .type-toggle button:hover:not(.aktiv) { background: var(--primær-lys); }
+
+        /* ── Månedskalender ── */
+        .maaned-nav {
+            display: flex; align-items: center;
+            justify-content: space-between; margin-bottom: 12px;
+        }
+        .maaned-label {
+            font-family: 'Syne', sans-serif; font-weight: 700;
+            font-size: 14px; color: var(--tekst);
+            text-transform: capitalize;
+        }
+        .maaned-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        .maaned-dag-header {
+            text-align: center;
+            font-family: 'Syne', sans-serif;
+            font-size: 11px; font-weight: 700;
+            color: var(--tekst-sek);
+            text-transform: uppercase;
+            padding: 4px 0;
+        }
+        .maaned-dag {
+            aspect-ratio: 1;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px;
+            font-size: 13px; font-weight: 600;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.15s;
+            color: var(--tekst);
+            background: var(--hvit);
+        }
+        .maaned-dag:hover:not(.tom):not(.fortid) { background: var(--primær-lys); border-color: var(--primær-mid); }
+        .maaned-dag.tom { visibility: hidden; cursor: default; }
+        .maaned-dag.fortid { color: var(--kant); cursor: default; }
+        .maaned-dag.valgt { background: var(--primær); color: white; border-color: var(--primær); }
+        .maaned-dag.i-dag { border-color: var(--primær-mid); }
+
+        /* Deltaker-kalender */
+        .deltaker-dag {
+            aspect-ratio: 1;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            border-radius: 8px;
+            font-size: 12px; font-weight: 600;
+            cursor: pointer;
+            border: 2px solid var(--kant);
+            transition: all 0.15s;
+            color: var(--tekst);
+            background: var(--hvit);
+            gap: 2px;
+        }
+        .deltaker-dag.tom { visibility: hidden; cursor: default; }
+        .deltaker-dag .dag-nr { font-size: 13px; font-weight: 700; }
+        .deltaker-dag .dag-svar { font-size: 9px; font-weight: 700; font-family: 'Syne', sans-serif; }
+        .deltaker-dag.kan { background: var(--primær); color: white; border-color: var(--primær); }
+        .deltaker-dag.kan-ikke { background: #fef3c7; border-color: #fbbf24; color: #92400e; }
+        .deltaker-dag:hover:not(.tom) { border-color: var(--primær); background: var(--primær-lys); color: var(--tekst); }
         .timeplan-nav {
             display: flex; align-items: center; justify-content: space-between;
             margin-bottom: 12px;
@@ -488,7 +568,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.24</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.27</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -498,7 +578,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.24</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.27</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -867,18 +947,23 @@
         function visSkjema(møteId) {
             const møte = møter[møteId];
             const erNy = møteId.startsWith('ny_');
+            const erHeldag = møte.heldagshendelse || false;
 
             document.getElementById('detaljTittel').textContent = erNy ? 'Nytt møte' : 'Rediger møte';
             document.getElementById('detaljSection').classList.add('vis');
 
-            // Sett timeplanDato til første valgte tid, eller i dag
-            if (møte.tider && møte.tider.length > 0 && møte.tider[0]) {
+            if (møte.tider && møte.tider.length > 0 && møte.tider[0] && !erHeldag) {
                 timeplanDato = new Date(møte.tider[0]);
                 timeplanDato.setHours(0,0,0,0);
             } else {
                 timeplanDato = new Date();
                 timeplanDato.setHours(0,0,0,0);
             }
+
+            const varighetOpts = [15,30,45,60,90,120,180].map(v => {
+                const tekst = v < 60 ? v+' min' : v===60 ? '1 time' : v===90 ? '1,5 time' : (v/60)+' timer';
+                return `<option value="${v}" ${(møte.varighet||60)===v?'selected':''}>${tekst}</option>`;
+            }).join('');
 
             document.getElementById('detaljInnhold').innerHTML = `
                 <button class="mobil-tilbake" onclick="mobilTilbake()">← Tilbake</button>
@@ -890,38 +975,47 @@
                     <label>Beskrivelse (valgfritt)</label>
                     <textarea id="editBeskrivelse" placeholder="Noen ord om møtet...">${møte.beskrivelse || ''}</textarea>
                 </div>
-                <div class="dato-varighet-rad">
-                    <div class="form-gruppe">
-                        <label>Dato</label>
-                        <input type="date" id="editDato" value="${datoTilString(timeplanDato)}" onchange="byttDato(this.value)">
+                <div class="type-toggle">
+                    <button id="toggleTid" class="${!erHeldag?'aktiv':''}" onclick="byttHendelsestype(false)">🕐 Tidspunkt</button>
+                    <button id="toggleHeldag" class="${erHeldag?'aktiv':''}" onclick="byttHendelsestype(true)">📅 Heldagshendelse</button>
+                </div>
+                <div id="tidspunktSeksjon" style="${erHeldag?'display:none':''}">
+                    <div class="dato-varighet-rad">
+                        <div class="form-gruppe">
+                            <label>Dato</label>
+                            <input type="date" id="editDato" value="${datoTilString(timeplanDato)}" onchange="byttDato(this.value)">
+                        </div>
+                        <div class="form-gruppe">
+                            <label>Varighet per møte</label>
+                            <select id="editVarighet" onchange="oppdaterTimeplan()" style="width:100%;padding:10px 12px;border:2px solid var(--kant);border-radius:var(--rs);font-size:0.95em;font-family:'Nunito',sans-serif;">${varighetOpts}</select>
+                        </div>
                     </div>
                     <div class="form-gruppe">
-                        <label>Varighet per møte</label>
-                        <select id="editVarighet" onchange="oppdaterTimeplan()" style="width:100%;padding:10px 12px;border:2px solid var(--kant);border-radius:var(--rs);font-size:0.95em;font-family:'Nunito',sans-serif;">
-                            <option value="15">15 min</option>
-                            <option value="30">30 min</option>
-                            <option value="45">45 min</option>
-                            <option value="60" ${(møte.varighet||60)===60?'selected':''}>1 time</option>
-                            <option value="90" ${(møte.varighet||60)===90?'selected':''}>1,5 time</option>
-                            <option value="120" ${(møte.varighet||60)===120?'selected':''}>2 timer</option>
-                            <option value="180" ${(møte.varighet||60)===180?'selected':''}>3 timer</option>
-                        </select>
+                        <label>Velg tidspunkter <span style="font-weight:400;color:var(--tekst-sek);">— klikk i timeplanen</span></label>
+                        <div class="timeplan-nav">
+                            <button class="timeplan-nav-knapp" onclick="endreTimeplanDag(-1)">←</button>
+                            <div class="timeplan-dato" id="timeplanDatoLabel"></div>
+                            <button class="timeplan-nav-knapp" onclick="endreTimeplanDag(1)">→</button>
+                        </div>
+                        <div class="timeplan-wrapper" id="timeplanWrapper">
+                            <div class="timeplan-grid" id="timeplanGrid"></div>
+                        </div>
                     </div>
                 </div>
-                <div class="form-gruppe">
-                    <label>Velg tidspunkter <span style="font-weight:400;color:var(--tekst-sek);">— klikk i timeplanen</span></label>
-                    <div class="timeplan-nav">
-                        <button class="timeplan-nav-knapp" onclick="endreTimeplanDag(-1)">←</button>
-                        <div class="timeplan-dato" id="timeplanDatoLabel"></div>
-                        <button class="timeplan-nav-knapp" onclick="endreTimeplanDag(1)">→</button>
-                    </div>
-                    <div class="timeplan-wrapper" id="timeplanWrapper">
-                        <div class="timeplan-grid" id="timeplanGrid"></div>
+                <div id="heldagSeksjon" style="${!erHeldag?'display:none':''}">
+                    <div class="form-gruppe">
+                        <label>Velg dager <span style="font-weight:400;color:var(--tekst-sek);">— klikk på dager</span></label>
+                        <div class="maaned-nav">
+                            <button class="timeplan-nav-knapp" onclick="endreMaaned(-1)">←</button>
+                            <div class="maaned-label" id="maanedLabel"></div>
+                            <button class="timeplan-nav-knapp" onclick="endreMaaned(1)">→</button>
+                        </div>
+                        <div class="maaned-grid" id="maanedGrid"></div>
                     </div>
                 </div>
                 <div class="form-gruppe">
                     <label>Fritekst-alternativ <span style="font-weight:400;color:var(--tekst-sek);">— valgfritt</span></label>
-                    <input type="text" id="editFritekst" placeholder="F.eks. «Jeg kan ikke noen av disse tidene»" value="${møte.fritekstAlternativ || ''}">
+                    <input type="text" id="editFritekst" placeholder="F.eks. «Jeg kan ikke noen av disse dagene»" value="${møte.fritekstAlternativ || ''}">
                     <div style="font-size:12px;color:var(--tekst-sek);margin-top:4px;">Vises nederst for deltakere med en «Velg dette»-knapp.</div>
                 </div>
                 <div class="knapp-gruppe">
@@ -931,7 +1025,12 @@
 
             const varighetEl = document.getElementById('editVarighet');
             if (varighetEl) varighetEl.value = møte.varighet || 60;
-            oppdaterTimeplan();
+
+            if (erHeldag) {
+                oppdaterMaanedKalender();
+            } else {
+                oppdaterTimeplan();
+            }
         }
 
         function datoTilString(dato) {
@@ -940,6 +1039,76 @@
             const d = String(dato.getDate()).padStart(2,'0');
             return `${y}-${m}-${d}`;
         }
+
+        let maanedDato = new Date();
+
+        window.byttHendelsestype = (erHeldag) => {
+            const møte = møter[currentMøteId];
+            if (!møte) return;
+            møte.heldagshendelse = erHeldag;
+            møte.tider = [];
+            document.getElementById('toggleTid').classList.toggle('aktiv', !erHeldag);
+            document.getElementById('toggleHeldag').classList.toggle('aktiv', erHeldag);
+            document.getElementById('tidspunktSeksjon').style.display = erHeldag ? 'none' : '';
+            document.getElementById('heldagSeksjon').style.display = erHeldag ? '' : 'none';
+            if (erHeldag) oppdaterMaanedKalender();
+            else oppdaterTimeplan();
+        };
+
+        window.endreMaaned = (retning) => {
+            maanedDato.setMonth(maanedDato.getMonth() + retning);
+            oppdaterMaanedKalender();
+        };
+
+        function oppdaterMaanedKalender() {
+            const grid = document.getElementById('maanedGrid');
+            const label = document.getElementById('maanedLabel');
+            if (!grid || !label) return;
+
+            const møte = møter[currentMøteId];
+            const valgteStr = new Set(møte?.tider || []);
+
+            const år = maanedDato.getFullYear();
+            const mnd = maanedDato.getMonth();
+            const iDag = new Date(); iDag.setHours(0,0,0,0);
+
+            label.textContent = maanedDato.toLocaleDateString('no-NO', { month:'long', year:'numeric' });
+
+            const dagNavn = ['Ma','Ti','On','To','Fr','Lø','Sø'];
+            let html = dagNavn.map(d => `<div class="maaned-dag-header">${d}</div>`).join('');
+
+            const førsteDag = new Date(år, mnd, 1);
+            // Norsk: mandag = 0
+            let startOffset = (førsteDag.getDay() + 6) % 7;
+            for (let i = 0; i < startOffset; i++) {
+                html += `<div class="maaned-dag tom"></div>`;
+            }
+
+            const dagerIMnd = new Date(år, mnd + 1, 0).getDate();
+            for (let dag = 1; dag <= dagerIMnd; dag++) {
+                const dato = new Date(år, mnd, dag);
+                const datoStr = datoTilString(dato);
+                const erValgt = valgteStr.has(datoStr);
+                const erIDag = dato.getTime() === iDag.getTime();
+                const erFortid = dato < iDag;
+                let klasse = 'maaned-dag';
+                if (erValgt) klasse += ' valgt';
+                else if (erFortid) klasse += ' fortid';
+                else if (erIDag) klasse += ' i-dag';
+                html += `<div class="${klasse}" onclick="toggleDag('${datoStr}')">${dag}</div>`;
+            }
+
+            grid.innerHTML = html;
+        }
+
+        window.toggleDag = (datoStr) => {
+            const møte = møter[currentMøteId];
+            if (!møte) return;
+            const idx = møte.tider.indexOf(datoStr);
+            if (idx >= 0) møte.tider.splice(idx, 1);
+            else { møte.tider.push(datoStr); møte.tider.sort(); }
+            oppdaterMaanedKalender();
+        };
 
         window.byttDato = (verdi) => {
             timeplanDato = new Date(verdi + 'T00:00:00');
@@ -1061,7 +1230,8 @@
             const møte = møter[currentMøteId];
             møte.tittel = document.getElementById('editTittel').value.trim();
             møte.beskrivelse = document.getElementById('editBeskrivelse').value.trim();
-            møte.varighet = parseInt(document.getElementById('editVarighet').value);
+            møte.varighet = parseInt(document.getElementById('editVarighet')?.value || 60);
+            møte.heldagshendelse = møte.heldagshendelse || false;
             møte.fritekstAlternativ = document.getElementById('editFritekst')?.value.trim() || '';
             møte.tider = møte.tider.filter(t => t);
 
@@ -1186,7 +1356,12 @@
             const navn    = localStorage.getItem('deltaker_navn_' + møteId) || null;
             const stemmer = møte.stemmer || {};
 
-            // Vanlige tid-kort
+            if (møte.heldagshendelse) {
+                renderDeltakerKalender(møteId, møte, navn, stemmer);
+                return;
+            }
+
+            // ── Vanlige tid-kort ──
             const tiderHtml = møte.tider.map(tid => {
                 const formatted = new Date(tid).toLocaleString('no-NO', {
                     weekday:'long', year:'numeric', month:'long',
@@ -1228,7 +1403,7 @@
                 </div>`;
             }
 
-            // Resultater for deltaker
+            // Resultater for deltaker - samme tabell som admin
             const antallDeltakere = Object.keys(stemmer).length;
             let resultatHtml = '';
             if (antallDeltakere > 0 && navn) {
@@ -1237,31 +1412,48 @@
                     jaPerTid[tid] = Object.values(stemmer).filter(s => s[tid] === 'ja').length;
                 });
                 const maxJa = Math.max(...Object.values(jaPerTid), 0);
-                const alleKan = møte.tider.filter(t => jaPerTid[t] === antallDeltakere);
+                const alleKanTider = møte.tider.filter(t => jaPerTid[t] === antallDeltakere);
 
-                let toppTekst = '';
-                if (alleKan.length > 0) {
-                    toppTekst = `<div style="background:#d1fae5;border:1px solid #6ee7b7;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:0.88em;">✅ <strong>Alle kan:</strong> ${alleKan.map(t => new Date(t).toLocaleString('no-NO',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})).join(', ')}</div>`;
-                } else if (maxJa > 0) {
-                    toppTekst = `<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:0.88em;">⚡ <strong>Flest kan (${maxJa}/${antallDeltakere})</strong></div>`;
+                function tidFarge(tid) {
+                    const ja = jaPerTid[tid] || 0;
+                    if (ja === antallDeltakere) return '#d1fae5';
+                    if (ja === maxJa && ja > 0) return '#fef3c7';
+                    return 'var(--primær-lys)';
                 }
 
-                const rader = møte.tider.map(tid => {
-                    const s = new Date(tid);
-                    const fmt = d => d.toLocaleString('no-NO',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-                    const ja = jaPerTid[tid] || 0;
-                    const nei = Object.values(stemmer).filter(s2 => s2[tid] === 'nei').length;
-                    const farge = ja === antallDeltakere ? '#d1fae5' : ja === maxJa && ja > 0 ? '#fef3c7' : 'var(--hvit)';
-                    return `<div class="resultat-rad" style="background:${farge};">
-                        <div class="resultat-tid">${fmt(s)}</div>
-                        <div class="resultat-tall">✓ ${ja} · ✗ ${nei}</div>
-                    </div>`;
-                }).join('');
+                // Grupper per dato
+                const datoGrupper = {};
+                møte.tider.forEach(tid => {
+                    const dato = new Date(tid).toLocaleDateString('no-NO', { weekday:'short', day:'numeric', month:'short' });
+                    if (!datoGrupper[dato]) datoGrupper[dato] = [];
+                    datoGrupper[dato].push(tid);
+                });
+
+                let tabell = '<div style="overflow-x:auto;">';
+                Object.entries(datoGrupper).forEach(([dato, tiderIDato]) => {
+                    tabell += `<div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--tekst-sek);padding:10px 0 4px;">${dato}</div>`;
+                    tabell += '<table class="resultater-tabell" style="margin-top:0;margin-bottom:12px;"><thead><tr><th style="min-width:80px;">Deltaker</th>';
+                    tiderIDato.forEach(tid => {
+                        const s = new Date(tid), e = new Date(s.getTime() + (møte.varighet||60)*60000);
+                        const fmt = d => d.toLocaleString('no-NO',{hour:'2-digit',minute:'2-digit'});
+                        tabell += `<th style="text-align:center;background:${tidFarge(tid)};padding:6px 10px;">${fmt(s)}<br><span style="font-weight:400;font-size:10px;opacity:0.7;">–${fmt(e)}</span></th>`;
+                    });
+                    tabell += '</tr></thead><tbody>';
+                    Object.keys(stemmer).forEach(deltakerNavn => {
+                        tabell += `<tr><td><strong>${deltakerNavn}</strong></td>`;
+                        tiderIDato.forEach(tid => {
+                            const v = stemmer[deltakerNavn]?.[tid] || '–';
+                            tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 10px;" class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}">${v==='ja'?'✓':v==='nei'?'✗':'–'}</td>`;
+                        });
+                        tabell += '</tr>';
+                    });
+                    tabell += '</tbody></table>';
+                });
+                tabell += '</div>';
 
                 resultatHtml = `<div class="resultater-deltaker">
                     <div class="resultater-deltaker-tittel">Oversikt</div>
-                    ${toppTekst}
-                    ${rader}
+                    ${tabell}
                 </div>`;
             }
 
@@ -1270,6 +1462,141 @@
             document.getElementById('deltakerTiderContainer').innerHTML =
                 tiderHtml + fritekstHtml + suksess + resultatHtml;
         }
+
+        let deltakerMaaned = new Date();
+
+        function renderDeltakerKalender(møteId, møte, navn, stemmer) {
+            const valgteStr = new Set(møte.tider || []);
+            const mineStemmer = navn ? (stemmer[navn] || {}) : {};
+
+            // Sett deltakerMaaned til første dato i møtet
+            if (møte.tider?.length > 0) {
+                const første = new Date(møte.tider[0] + 'T00:00:00');
+                deltakerMaaned = new Date(første.getFullYear(), første.getMonth(), 1);
+            }
+
+            function byggKalender() {
+                const år = deltakerMaaned.getFullYear();
+                const mnd = deltakerMaaned.getMonth();
+                const label = deltakerMaaned.toLocaleDateString('no-NO', { month:'long', year:'numeric' });
+
+                const dagNavn = ['Ma','Ti','On','To','Fr','Lø','Sø'];
+                let html = `<div class="maaned-nav" style="margin-bottom:12px;">
+                    <button class="timeplan-nav-knapp" onclick="endreDeltakerMaaned(-1)">←</button>
+                    <div class="maaned-label">${label}</div>
+                    <button class="timeplan-nav-knapp" onclick="endreDeltakerMaaned(1)">→</button>
+                </div>
+                <div class="maaned-grid">`;
+
+                html += dagNavn.map(d => `<div class="maaned-dag-header">${d}</div>`).join('');
+
+                const førsteDag = new Date(år, mnd, 1);
+                const startOffset = (førsteDag.getDay() + 6) % 7;
+                for (let i = 0; i < startOffset; i++) html += `<div class="deltaker-dag tom"></div>`;
+
+                const dagerIMnd = new Date(år, mnd + 1, 0).getDate();
+                for (let dag = 1; dag <= dagerIMnd; dag++) {
+                    const datoStr = `${år}-${String(mnd+1).padStart(2,'0')}-${String(dag).padStart(2,'0')}`;
+                    if (!valgteStr.has(datoStr)) {
+                        html += `<div class="deltaker-dag" style="opacity:0.25;cursor:default;">${dag}</div>`;
+                        continue;
+                    }
+                    const svar = mineStemmer[datoStr] || null;
+                    let klasse = 'deltaker-dag';
+                    let svarTekst = '';
+                    if (svar === 'ja') { klasse += ' kan'; svarTekst = 'Kan'; }
+                    else if (svar === 'nei') { klasse += ' kan-ikke'; svarTekst = 'Kan ikke'; }
+                    html += `<div class="${klasse}" onclick="stemKalender('${møteId}','${datoStr}')">
+                        <div class="dag-nr">${dag}</div>
+                        ${svarTekst ? `<div class="dag-svar">${svarTekst}</div>` : ''}
+                    </div>`;
+                }
+                html += '</div>';
+
+                // Fritekst
+                let fritekstHtml = '';
+                if (møte.fritekstAlternativ) {
+                    const erValgt = mineStemmer['fritekst_valg'] === 'valgt';
+                    const antall = Object.values(stemmer).filter(s => s['fritekst_valg'] === 'valgt').length;
+                    fritekstHtml = `<div class="fritekst-kort" style="margin-top:16px;">
+                        <div class="fritekst-tekst">${møte.fritekstAlternativ}</div>
+                        <div style="font-size:0.82em;color:#92400e;margin-bottom:8px;">${antall > 0 ? antall + ' har valgt dette' : ''}</div>
+                        <button class="velg-knapp ${erValgt?'valgt':''}" onclick="stem('${møteId}','fritekst_valg','valgt')">${erValgt ? '✓ Valgt' : 'Velg dette'}</button>
+                    </div>`;
+                }
+
+                const suksess = navn ? '<div class="suksess-melding" style="margin-top:16px;">✓ Svarene dine er lagret</div>' : '';
+
+                // Tabell
+                const antallDeltakere = Object.keys(stemmer).length;
+                let tabellHtml = '';
+                if (antallDeltakere > 0 && navn) {
+                    const jaPerDag = {};
+                    møte.tider.forEach(d => { jaPerDag[d] = Object.values(stemmer).filter(s => s[d] === 'ja').length; });
+                    const maxJa = Math.max(...Object.values(jaPerDag), 0);
+
+                    const fmt = d => new Date(d + 'T00:00:00').toLocaleDateString('no-NO', { weekday:'short', day:'numeric', month:'short' });
+                    const tidFarge = d => {
+                        const ja = jaPerDag[d] || 0;
+                        if (ja === antallDeltakere) return '#d1fae5';
+                        if (ja === maxJa && ja > 0) return '#fef3c7';
+                        return 'var(--primær-lys)';
+                    };
+
+                    let tabell = '<div style="overflow-x:auto;margin-top:20px;border-top:2px solid var(--kant);padding-top:16px;"><div style="font-family:\'Syne\',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--tekst-sek);margin-bottom:8px;">Oversikt</div>';
+                    tabell += '<table class="resultater-tabell"><thead><tr><th>Deltaker</th>';
+                    møte.tider.forEach(d => { tabell += `<th style="text-align:center;background:${tidFarge(d)};padding:6px 8px;font-size:11px;">${fmt(d)}</th>`; });
+                    tabell += '</tr></thead><tbody>';
+                    Object.keys(stemmer).forEach(n => {
+                        tabell += `<tr><td><strong>${n}</strong></td>`;
+                        møte.tider.forEach(d => {
+                            const v = stemmer[n]?.[d] || '–';
+                            tabell += `<td style="text-align:center;background:${tidFarge(d)};" class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}">${v==='ja'?'✓':v==='nei'?'✗':'–'}</td>`;
+                        });
+                        tabell += '</tr>';
+                    });
+                    tabell += '</tbody></table></div>';
+                    tabellHtml = tabell;
+                }
+
+                document.getElementById('deltakerTiderContainer').innerHTML = html + fritekstHtml + suksess + tabellHtml;
+            }
+
+            byggKalender();
+
+            window.endreDeltakerMaaned = (retning) => {
+                deltakerMaaned.setMonth(deltakerMaaned.getMonth() + retning);
+                byggKalender();
+            };
+        }
+
+        window.stemKalender = async (møteId, datoStr) => {
+            let navn = localStorage.getItem('deltaker_navn_' + møteId);
+            if (!navn) {
+                navn = document.getElementById('deltakerNavnInput')?.value.trim();
+                if (!navn) {
+                    document.getElementById('deltakerNavnInput').focus();
+                    document.getElementById('deltakerNavnInput').style.borderColor = '#f87171';
+                    setTimeout(() => document.getElementById('deltakerNavnInput').style.borderColor = '', 2000);
+                    return;
+                }
+                localStorage.setItem('deltaker_navn_' + møteId, navn);
+            }
+            try {
+                const snap = await getDoc(doc(db, 'schedule_moter', møteId));
+                if (!snap.exists()) return;
+                const møte = snap.data();
+                if (!møte.stemmer) møte.stemmer = {};
+                if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
+                // Toggle: ja → nei → (fjern)
+                const nå = møte.stemmer[navn][datoStr];
+                if (!nå) møte.stemmer[navn][datoStr] = 'ja';
+                else if (nå === 'ja') møte.stemmer[navn][datoStr] = 'nei';
+                else delete møte.stemmer[navn][datoStr];
+                await setDoc(doc(db, 'schedule_moter', møteId), møte);
+                renderDeltakerTider(møteId, møte);
+            } catch(e) { alert('Feil: ' + e.message); }
+        };
 
         window.stem = async (møteId, tid, stemme) => {
             const navn = document.getElementById('deltakerNavnInput').value.trim();
