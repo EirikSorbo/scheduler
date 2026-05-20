@@ -568,7 +568,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.27</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.28</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -578,7 +578,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.27</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.28</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -920,13 +920,18 @@
                         <button class="btn-primær" onclick="kopierLink('${link}')">Kopier</button>
                     </div>
                 </div>
+                ${møte.heldagshendelse ? '' : `
                 <div class="form-gruppe">
                     <label>Varighet</label>
                     <div style="padding:8px;background:var(--primær-lys);border-radius:6px;">${varighetTekst(møte.varighet)}</div>
-                </div>
+                </div>`}
                 <div class="form-gruppe">
-                    <label>Tider</label>
+                    <label>${møte.heldagshendelse ? 'Dager' : 'Tider'}</label>
                     ${møte.tider.map(tid => {
+                        if (møte.heldagshendelse) {
+                            const dato = new Date(tid + 'T00:00:00').toLocaleDateString('no-NO', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+                            return `<div style="padding:8px;background:var(--primær-lys);border-radius:6px;margin-bottom:8px;">${dato}</div>`;
+                        }
                         const start = new Date(tid);
                         const slutt = new Date(start.getTime() + (møte.varighet||60) * 60000);
                         const fmt = d => d.toLocaleString('no-NO', { hour:'2-digit', minute:'2-digit' });
@@ -1307,6 +1312,7 @@
 
         // ── Deltaker: Last panel ──
         async function lastDeltakerPanel(møteId) {
+            deltakerMaanedSatt = false;
             try {
                 const snap = await getDoc(doc(db, 'schedule_moter', møteId));
                 if (!snap.exists()) {
@@ -1464,28 +1470,53 @@
         }
 
         let deltakerMaaned = new Date();
+        let deltakerMaanedSatt = false;
 
         function renderDeltakerKalender(møteId, møte, navn, stemmer) {
             const valgteStr = new Set(møte.tider || []);
             const mineStemmer = navn ? (stemmer[navn] || {}) : {};
 
-            // Sett deltakerMaaned til første dato i møtet
-            if (møte.tider?.length > 0) {
+            // Sett deltakerMaaned til første dato kun første gang
+            if (!deltakerMaanedSatt && møte.tider?.length > 0) {
                 const første = new Date(møte.tider[0] + 'T00:00:00');
                 deltakerMaaned = new Date(første.getFullYear(), første.getMonth(), 1);
+                deltakerMaanedSatt = true;
             }
+
+            // Finn alle måneder med valgte dager - for indikator
+            const månederMedDager = [...new Set(møte.tider.map(t => t.slice(0,7)))].sort();
+            const antallMåneder = månederMedDager.length;
 
             function byggKalender() {
                 const år = deltakerMaaned.getFullYear();
                 const mnd = deltakerMaaned.getMonth();
+                const currentKey = `${år}-${String(mnd+1).padStart(2,'0')}`;
                 const label = deltakerMaaned.toLocaleDateString('no-NO', { month:'long', year:'numeric' });
 
+                // Månedindikator-prikker
+                let prikker = '';
+                if (antallMåneder > 1) {
+                    prikker = '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">' +
+                        månederMedDager.map(m => {
+                            const aktiv = m === currentKey;
+                            return `<div style="width:8px;height:8px;border-radius:50%;background:${aktiv ? 'var(--primær)' : 'var(--kant)'};"></div>`;
+                        }).join('') + '</div>';
+                }
+
+                // Hint hvis neste måned har dager
+                const nesteMndIdx = mnd === 11 ? 0 : mnd + 1;
+                const nesteÅr = mnd === 11 ? år + 1 : år;
+                const nesteMndKey = `${nesteÅr}-${String(nesteMndIdx+1).padStart(2,'0')}`;
+                const nesteHint = månederMedDager.includes(nesteMndKey) ?
+                    `<div style="text-align:center;font-size:12px;color:var(--primær);font-weight:600;margin-top:8px;">→ Flere alternativer neste måned</div>` : '';
+
                 const dagNavn = ['Ma','Ti','On','To','Fr','Lø','Sø'];
-                let html = `<div class="maaned-nav" style="margin-bottom:12px;">
+                let html = `<div class="maaned-nav" style="margin-bottom:4px;">
                     <button class="timeplan-nav-knapp" onclick="endreDeltakerMaaned(-1)">←</button>
                     <div class="maaned-label">${label}</div>
                     <button class="timeplan-nav-knapp" onclick="endreDeltakerMaaned(1)">→</button>
                 </div>
+                ${prikker}
                 <div class="maaned-grid">`;
 
                 html += dagNavn.map(d => `<div class="maaned-dag-header">${d}</div>`).join('');
@@ -1512,6 +1543,7 @@
                     </div>`;
                 }
                 html += '</div>';
+                html += nesteHint;
 
                 // Fritekst
                 let fritekstHtml = '';
