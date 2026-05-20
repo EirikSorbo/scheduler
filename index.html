@@ -668,7 +668,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.47</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.49</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -678,7 +678,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.47</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.49</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -716,7 +716,16 @@
     <div id="deltakerPanel" class="panel">
         <main>
             <div class="deltaker-container">
-                <div id="deltakerHeader"></div>
+                <!-- Møte-header vises alltid, tittel fylles inn fra JS -->
+                <div class="møte-header" style="margin-bottom:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div style="flex:1;">
+                            <h2 id="deltakerMøteTittel" style="color:var(--primær);font-family:'Syne',sans-serif;font-weight:700;font-size:1.3em;margin-bottom:4px;">Laster…</h2>
+                            <p id="deltakerMøteBeskrivelse" style="color:var(--tekst-sek);font-size:0.95em;"></p>
+                        </div>
+                        <div style="font-family:'Nunito',sans-serif;font-size:12px;color:var(--tekst-sek);text-align:right;white-space:nowrap;margin-left:16px;margin-top:2px;">By Eirik Sørbø</div>
+                    </div>
+                </div>
 
                 <!-- Navnefelt -->
                 <div class="kort" id="navneKort" style="margin-bottom:12px;">
@@ -1427,43 +1436,24 @@
         // ── Deltaker: Last panel ──
         async function lastDeltakerPanel(møteId) {
             deltakerMaanedSatt = false;
-
-            document.getElementById('deltakerTiderContainer').innerHTML =
-                '<p style="color:var(--tekst-sek);padding:20px 0;">Henter møteinfo…</p>';
+            document.getElementById('deltakerTiderContainer').innerHTML = '';
 
             try {
                 const snap = await getDoc(doc(db, 'schedule_moter', møteId));
                 if (!snap.exists()) {
-                    document.getElementById('deltakerHeader').innerHTML =
-                        '<div class="møte-header"><h2 style="color:var(--primær);font-family:Syne,sans-serif;">Møte ikke funnet</h2></div>';
-                    document.getElementById('deltakerTiderContainer').innerHTML = '';
+                    document.getElementById('deltakerMøteTittel').textContent = 'Møte ikke funnet';
                     return;
                 }
                 const møte = snap.data();
+                document.getElementById('deltakerMøteTittel').textContent = møte.tittel || '';
+                document.getElementById('deltakerMøteBeskrivelse').textContent = møte.beskrivelse || '';
 
-                // Bygg header med tittel på én gang — ingen tom periode
-                document.getElementById('deltakerHeader').innerHTML = `
-                    <div class="møte-header" style="margin-bottom:16px;">
-                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-                            <div>
-                                <h2 style="color:var(--primær);font-family:'Syne',sans-serif;font-weight:700;font-size:1.3em;margin-bottom:4px;">${møte.tittel || ''}</h2>
-                                <p style="color:var(--tekst-sek);font-size:0.95em;">${møte.beskrivelse || ''}</p>
-                            </div>
-                            <div style="font-family:'Nunito',sans-serif;font-size:12px;color:var(--tekst-sek);text-align:right;white-space:nowrap;margin-left:16px;margin-top:2px;">By Eirik Sørbø</div>
-                        </div>
-                    </div>`;
-
-                // Fyll inn lagret navn hvis det finnes
                 const lagretNavn = localStorage.getItem('deltaker_navn_' + møteId);
-                if (lagretNavn) {
-                    document.getElementById('deltakerNavnInput').value = lagretNavn;
-                }
+                if (lagretNavn) document.getElementById('deltakerNavnInput').value = lagretNavn;
 
                 renderDeltakerTider(møteId, møte);
             } catch(e) {
-                document.getElementById('deltakerHeader').innerHTML =
-                    '<div class="møte-header"><h2 style="color:var(--primær);font-family:Syne,sans-serif;">Kunne ikke laste møtet</h2></div>';
-                document.getElementById('deltakerTiderContainer').innerHTML = '';
+                document.getElementById('deltakerMøteTittel').textContent = 'Feil ved lasting';
                 console.error(e);
             }
         }
