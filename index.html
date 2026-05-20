@@ -495,12 +495,12 @@
         }
         #deltakerPanel .fritekst-tekst { color: #991b1b; }
         #deltakerPanel .velg-knapp {
-            background: #991b1b;
-            border-color: #991b1b;
+            background: #fca5a5;
+            border-color: #fca5a5;
             color: white;
         }
-        #deltakerPanel .velg-knapp:hover { background: #7f1d1d; border-color: #7f1d1d; }
-        #deltakerPanel .velg-knapp.valgt { background: #7f1d1d; color: white; border-color: #7f1d1d; }
+        #deltakerPanel .velg-knapp:hover { background: #f87171; border-color: #f87171; }
+        #deltakerPanel .velg-knapp.valgt { background: #ef4444; color: white; border-color: #ef4444; }
 
         /* Override alle gjenværende lilla */
         #deltakerPanel .tid-kort { border-left-color: var(--d-primær); }
@@ -666,7 +666,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.39</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.41</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -676,7 +676,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.39</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.41</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -1654,6 +1654,7 @@
                     <button class="timeplan-nav-knapp" onclick="endreDeltakerMaaned(1)">→</button>
                 </div>
                 ${prikker}
+                ${nesteHint}
                 <div class="maaned-grid">`;
 
                 html += dagNavn.map(d => `<div class="maaned-dag-header">${d}</div>`).join('');
