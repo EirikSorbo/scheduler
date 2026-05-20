@@ -492,6 +492,14 @@
         #deltakerPanel .velg-knapp:hover { border-color: #e8a020; background: #faebd0; }
         #deltakerPanel .velg-knapp.valgt { background: #e8a020; color: white; border-color: #e8a020; }
 
+        /* Override alle gjenværende lilla */
+        #deltakerPanel .tid-kort { border-left-color: var(--d-primær); }
+        #deltakerPanel .deling-boks { background: var(--d-primær-lys); border-color: var(--d-primær-mid); }
+        #deltakerPanel .resultater-tabell th { background: var(--d-primær-lys); color: var(--d-primær-mørk); border-bottom-color: var(--d-kant); }
+        #deltakerPanel .resultater-tabell tr:hover { background: var(--d-primær-lys); }
+        #deltakerPanel .deltaker-dag.kan-ikke:hover { background: var(--d-primær-lys); border-color: var(--d-primær-mid); }
+        #deltakerPanel .suksess-melding { background: var(--d-primær-lys); color: var(--d-primær-mørk); border-color: var(--d-primær); }
+
         .møte-header {
             background: var(--hvit); padding: 24px;
             border-radius: var(--r); margin-bottom: 24px;
@@ -639,7 +647,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.33</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.34</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -649,7 +657,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.33</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.34</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -1453,7 +1461,7 @@
                 });
                 const minStemme = navn ? (stemmer[navn]?.[tid] || null) : null;
                 const tidEscaped = tid.replace(/'/g, "\\'");
-                const kantFarge = minStemme === 'ja' ? '#6ee7b7' : minStemme === 'nei' ? '#fca5a5' : 'var(--primær)';
+                const kantFarge = minStemme === 'ja' ? '#6ee7b7' : minStemme === 'nei' ? '#fca5a5' : '#3b82f6';
 
                 return `<div class="tid-kort" style="border-left-color:${kantFarge};">
                     <div class="tid-rad">
@@ -1496,7 +1504,7 @@
                     const ja = jaPerTid[tid] || 0;
                     if (ja === antallDeltakere) return '#d1fae5';
                     if (ja === maxJa && ja > 0) return '#fef3c7';
-                    return 'var(--primær-lys)';
+                    return '#eff6ff';
                 }
 
                 // Grupper per dato
@@ -1644,7 +1652,7 @@
                         const ja = jaPerDag[d] || 0;
                         if (ja === antallDeltakere) return '#d1fae5';
                         if (ja === maxJa && ja > 0) return '#fef3c7';
-                        return 'var(--primær-lys)';
+                        return '#eff6ff';
                     };
 
                     let tabell = '<div style="overflow-x:auto;margin-top:20px;border-top:2px solid var(--kant);padding-top:16px;"><div style="font-family:\'Syne\',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--tekst-sek);margin-bottom:8px;">Oversikt</div>';
