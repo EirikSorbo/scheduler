@@ -666,7 +666,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.44</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.45</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -676,7 +676,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.44</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.45</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -1433,14 +1433,21 @@
         // ── Deltaker: Last panel ──
         async function lastDeltakerPanel(møteId) {
             deltakerMaanedSatt = false;
+
+            // Vis "Laster..." umiddelbart så kortene ikke er tomme
+            document.getElementById('deltakerMøteTittel').textContent = 'Laster…';
+            document.getElementById('deltakerTiderContainer').innerHTML =
+                '<p style="color:var(--tekst-sek);padding:20px 0;">Henter møteinfo…</p>';
+
             try {
                 const snap = await getDoc(doc(db, 'schedule_moter', møteId));
                 if (!snap.exists()) {
-                    document.getElementById('deltakerTiderContainer').innerHTML =
-                        '<p style="color:var(--tekst-sek);padding:20px;">Møte ikke funnet.</p>';
+                    document.getElementById('deltakerMøteTittel').textContent = 'Møte ikke funnet';
+                    document.getElementById('deltakerTiderContainer').innerHTML = '';
                     return;
                 }
                 const møte = snap.data();
+                // Sett tittel og beskrivelse
                 document.getElementById('deltakerMøteTittel').textContent = møte.tittel;
                 document.getElementById('deltakerMøteBeskrivelse').textContent = møte.beskrivelse || '';
 
@@ -1452,8 +1459,9 @@
 
                 renderDeltakerTider(møteId, møte);
             } catch(e) {
+                document.getElementById('deltakerMøteTittel').textContent = 'Feil ved lasting';
                 document.getElementById('deltakerTiderContainer').innerHTML =
-                    '<p style="color:var(--tekst-sek);padding:20px;">Kunne ikke laste møtet.</p>';
+                    '<p style="color:var(--tekst-sek);padding:20px 0;">Kunne ikke laste møtet.</p>';
                 console.error(e);
             }
         }
@@ -1753,9 +1761,24 @@
                 const snap = await getDoc(doc(db, 'schedule_moter', møteId));
                 if (!snap.exists()) return;
                 const møte = snap.data();
+
+                // Sjekk duplikat navn
+                const eksisterende = Object.keys(møte.stemmer || {});
+                const lagretNavn = localStorage.getItem('deltaker_navn_' + møteId);
+                if (eksisterende.includes(navn) && lagretNavn !== navn) {
+                    const inp = document.getElementById('deltakerNavnInput');
+                    if (inp) {
+                        inp.value = '';
+                        inp.placeholder = '⚠ Dette navnet er tatt — velg et annet';
+                        inp.style.borderColor = '#f87171';
+                        setTimeout(() => { inp.style.borderColor = ''; inp.placeholder = 'Skriv ditt navn her...'; }, 4000);
+                    }
+                    return;
+                }
+
+                localStorage.setItem('deltaker_navn_' + møteId, navn);
                 if (!møte.stemmer) møte.stemmer = {};
                 if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
-                // Toggle: ja → nei → (fjern)
                 const nå = møte.stemmer[navn][datoStr];
                 if (!nå) møte.stemmer[navn][datoStr] = 'ja';
                 else if (nå === 'ja') møte.stemmer[navn][datoStr] = 'nei';
@@ -1773,12 +1796,25 @@
                 setTimeout(() => document.getElementById('deltakerNavnInput').style.borderColor = '', 2000);
                 return;
             }
-            localStorage.setItem('deltaker_navn_' + møteId, navn);
 
             try {
                 const snap = await getDoc(doc(db, 'schedule_moter', møteId));
                 if (!snap.exists()) { alert('Møtet finnes ikke lenger'); return; }
                 const møte = snap.data();
+
+                // Bug 2: Sjekk om navnet tilhører en annen bruker
+                const eksisterende = Object.keys(møte.stemmer || {});
+                const lagretNavn = localStorage.getItem('deltaker_navn_' + møteId);
+                if (eksisterende.includes(navn) && lagretNavn !== navn) {
+                    const inp = document.getElementById('deltakerNavnInput');
+                    inp.value = '';
+                    inp.placeholder = '⚠ Dette navnet er tatt — velg et annet';
+                    inp.style.borderColor = '#f87171';
+                    setTimeout(() => { inp.style.borderColor = ''; inp.placeholder = 'Skriv ditt navn her...'; }, 4000);
+                    return;
+                }
+
+                localStorage.setItem('deltaker_navn_' + møteId, navn);
                 if (!møte.stemmer)        møte.stemmer = {};
                 if (!møte.stemmer[navn])  møte.stemmer[navn] = {};
                 if (stemme === 'clear')   delete møte.stemmer[navn][tid];
