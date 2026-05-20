@@ -426,7 +426,71 @@
         .deling-boks input { flex: 1; background: var(--hvit); border: 1px solid var(--kant); }
 
         /* ── Deltaker ── */
-        .deltaker-container { max-width: 600px; margin: 0 auto; }
+        /* ── Blå tema for deltaker-panel ── */
+        #deltakerPanel {
+            --d-primær: #3b82f6;
+            --d-primær-lys: #eff6ff;
+            --d-primær-mid: #bfdbfe;
+            --d-primær-mørk: #1e3a5f;
+            --d-kant: #bfdbfe;
+            --d-tekst-sek: #4b7ab0;
+            --d-bg: #f0f7ff;
+        }
+        #deltakerPanel { background: var(--d-bg); min-height: 100vh; }
+
+        #deltakerPanel .møte-header {
+            background: white;
+            border: 1px solid var(--d-kant);
+            border-left: 4px solid var(--d-primær);
+        }
+        #deltakerPanel .møte-header h2 { color: var(--d-primær); }
+        #deltakerPanel .møte-header p { color: var(--d-tekst-sek); }
+
+        #deltakerPanel .kort {
+            border-color: var(--d-kant);
+        }
+
+        #deltakerPanel .tid-kort {
+            border: 1px solid var(--d-kant);
+            border-left: 4px solid var(--d-primær);
+        }
+        #deltakerPanel .tid-tekst { color: var(--d-primær-mørk); }
+        #deltakerPanel .tid-stemmer { color: var(--d-tekst-sek); }
+
+        #deltakerPanel input[type="text"] {
+            border-color: var(--d-kant);
+        }
+        #deltakerPanel input[type="text"]:focus {
+            border-color: var(--d-primær);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+        }
+
+        #deltakerPanel label { color: var(--d-primær-mørk); }
+
+        #deltakerPanel .suksess-melding {
+            background: var(--d-primær-lys);
+            color: var(--d-primær-mørk);
+            border-color: var(--d-primær);
+        }
+
+        #deltakerPanel .resultater-deltaker { border-top-color: var(--d-kant); }
+        #deltakerPanel .resultater-deltaker-tittel { color: var(--d-tekst-sek); }
+
+        #deltakerPanel .resultater-tabell th { background: var(--d-primær-lys); color: var(--d-primær-mørk); border-bottom-color: var(--d-kant); }
+        #deltakerPanel .resultater-tabell td { border-bottom-color: var(--d-kant); }
+        #deltakerPanel .resultater-tabell tr:hover { background: var(--d-primær-lys); }
+
+        #deltakerPanel .maaned-nav .maaned-label { color: var(--d-primær-mørk); }
+        #deltakerPanel .timeplan-nav-knapp { border-color: var(--d-kant); color: var(--d-tekst-sek); }
+        #deltakerPanel .timeplan-nav-knapp:hover { background: var(--d-primær-lys); color: var(--d-primær); border-color: var(--d-primær-mid); }
+        #deltakerPanel .maaned-dag-header { color: var(--d-tekst-sek); }
+        #deltakerPanel .maaned-dag { background: white; color: var(--d-primær-mørk); }
+        #deltakerPanel .maaned-dag.i-dag { border-color: var(--d-primær-mid); }
+        #deltakerPanel .maaned-dag.valgt { background: var(--d-primær); border-color: var(--d-primær); color: white; }
+
+        #deltakerPanel .velg-knapp { background: #fdf6ec; border-color: #f5d49a; color: #7c4a00; }
+        #deltakerPanel .velg-knapp:hover { border-color: #e8a020; background: #faebd0; }
+        #deltakerPanel .velg-knapp.valgt { background: #e8a020; color: white; border-color: #e8a020; }
 
         .møte-header {
             background: var(--hvit); padding: 24px;
@@ -575,7 +639,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.32</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.33</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -585,7 +649,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.32</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.33</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
