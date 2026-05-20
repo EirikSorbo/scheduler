@@ -440,11 +440,11 @@
 
         #deltakerPanel .møte-header {
             background: white;
-            border: 1px solid var(--d-kant);
-            border-left: 4px solid var(--d-primær);
+            border: 1px solid var(--kant);
+            border-left: 4px solid var(--primær);
         }
-        #deltakerPanel .møte-header h2 { color: var(--d-primær); }
-        #deltakerPanel .møte-header p { color: var(--d-tekst-sek); }
+        #deltakerPanel .møte-header h2 { color: var(--primær); }
+        #deltakerPanel .møte-header p { color: var(--tekst-sek); }
 
         #deltakerPanel .kort {
             border-color: var(--d-kant);
@@ -662,7 +662,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.37</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.38</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -672,7 +672,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.37</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.38</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -1461,6 +1461,12 @@
             const navn    = localStorage.getItem('deltaker_navn_' + møteId) || null;
             const stemmer = møte.stemmer || {};
 
+            // Sett tittel i navnekortet alltid
+            const navneTittel = document.getElementById('navneKortTittel');
+            if (navneTittel && møte.tittel) navneTittel.textContent = møte.tittel;
+            const headerTittel = document.getElementById('deltakerMøteTittel');
+            if (headerTittel && møte.tittel) headerTittel.textContent = møte.tittel;
+
             if (møte.heldagshendelse) {
                 renderDeltakerKalender(møteId, møte, navn, stemmer);
                 return;
@@ -1481,7 +1487,12 @@
                 });
                 const minStemme = navn ? (stemmer[navn]?.[tid] || null) : null;
                 const tidEscaped = tid.replace(/'/g, "\\'");
-                const kantFarge = minStemme === 'ja' ? '#6ee7b7' : minStemme === 'nei' ? '#fca5a5' : '#3b82f6';
+                const kantFarge = minStemme === 'ja' ? '#6ee7b7' : minStemme === 'nei' ? '#fca5a5' : 'var(--primær)';
+                const kanTekst  = minStemme === 'ja'  ? '✓ Kan'      : 'Kan';
+                const ikkeKanTekst = minStemme === 'nei' ? '✗ Kan ikke' : 'Kan ikke';
+                // Toggle: clicking active button clears vote
+                const kanStemme  = minStemme === 'ja'  ? 'clear' : 'ja';
+                const ikkeKanStemme = minStemme === 'nei' ? 'clear' : 'nei';
 
                 return `<div class="tid-kort" style="border-left-color:${kantFarge};">
                     <div class="tid-rad">
@@ -1489,8 +1500,8 @@
                         <div class="tid-stemmer">✓ ${ja} · ✗ ${nei}</div>
                     </div>
                     <div class="stemme-knapp-gruppe">
-                        <button class="stemme-knapp kan-knapp ${minStemme==='ja'?'valgt-ja':''}" onclick="stem('${møteId}','${tidEscaped}','ja')">Kan</button>
-                        <button class="stemme-knapp kan-ikke-knapp ${minStemme==='nei'?'valgt-nei':''}" onclick="stem('${møteId}','${tidEscaped}','nei')">Kan ikke</button>
+                        <button class="stemme-knapp kan-knapp ${minStemme==='ja'?'valgt-ja':''}" onclick="stem('${møteId}','${tidEscaped}','${kanStemme}')">${kanTekst}</button>
+                        <button class="stemme-knapp kan-ikke-knapp ${minStemme==='nei'?'valgt-nei':''}" onclick="stem('${møteId}','${tidEscaped}','${ikkeKanStemme}')">${ikkeKanTekst}</button>
                     </div>
                 </div>`;
             }).join('');
@@ -1746,7 +1757,8 @@
                 const møte = snap.data();
                 if (!møte.stemmer)        møte.stemmer = {};
                 if (!møte.stemmer[navn])  møte.stemmer[navn] = {};
-                møte.stemmer[navn][tid]   = stemme;
+                if (stemme === 'clear')   delete møte.stemmer[navn][tid];
+                else                      møte.stemmer[navn][tid] = stemme;
                 await setDoc(doc(db, 'schedule_moter', møteId), møte);
                 renderDeltakerTider(møteId, møte);
             } catch(e) { alert('Feil ved stemming: ' + e.message); }
