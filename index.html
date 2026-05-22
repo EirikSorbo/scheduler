@@ -720,7 +720,7 @@
                 <div class="møte-header" style="margin-bottom:16px;">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
                         <div style="flex:1;">
-                            <h2 id="deltakerMøteTittel" style="color:var(--primær);font-family:'Syne',sans-serif;font-weight:700;font-size:1.3em;margin-bottom:4px;">Laster…</h2>
+                            <h2 id="deltakerMøteTittel" style="color:var(--primær);font-family:'Syne',sans-serif;font-weight:700;font-size:1.3em;margin-bottom:4px;"></h2>
                             <p id="deltakerMøteBeskrivelse" style="color:var(--tekst-sek);font-size:0.95em;"></p>
                         </div>
                         <div style="font-family:'Nunito',sans-serif;font-size:12px;color:var(--tekst-sek);text-align:right;white-space:nowrap;margin-left:16px;margin-top:2px;">By Eirik Sørbø</div>
@@ -1464,12 +1464,26 @@
             clearTimeout(navnDebounce);
             navnDebounce = setTimeout(() => {
                 const navn = document.getElementById('deltakerNavnInput').value.trim();
+                const inp  = document.getElementById('deltakerNavnInput');
                 if (navn) {
-                    localStorage.setItem('deltaker_navn_' + møteIdFraUrl, navn);
+                    // Sjekk om navn er tatt (uten å låse — bare vis advarsel)
                     getDoc(doc(db, 'schedule_moter', møteIdFraUrl)).then(snap => {
-                        if (snap.exists()) renderDeltakerTider(møteIdFraUrl, snap.data());
+                        if (!snap.exists()) return;
+                        const møte = snap.data();
+                        const eksisterende = Object.keys(møte.stemmer || {});
+                        const lagret = localStorage.getItem('deltaker_navn_' + møteIdFraUrl);
+                        if (eksisterende.includes(navn) && lagret !== navn) {
+                            inp.style.borderColor = '#f87171';
+                            inp.title = 'Dette navnet er allerede registrert — velg et annet';
+                        } else {
+                            inp.style.borderColor = '';
+                            inp.title = '';
+                            localStorage.setItem('deltaker_navn_' + møteIdFraUrl, navn);
+                            renderDeltakerTider(møteIdFraUrl, møte);
+                        }
                     });
                 } else {
+                    inp.style.borderColor = '';
                     localStorage.removeItem('deltaker_navn_' + møteIdFraUrl);
                     getDoc(doc(db, 'schedule_moter', møteIdFraUrl)).then(snap => {
                         if (snap.exists()) renderDeltakerTider(møteIdFraUrl, snap.data());
@@ -1482,8 +1496,11 @@
             const navn    = localStorage.getItem('deltaker_navn_' + møteId) || null;
             const stemmer = møte.stemmer || {};
 
-            // Sett tittel i header alltid, uansett navn
-
+            // Sett tittel alltid, uansett om navn er oppgitt
+            const h2 = document.getElementById('deltakerMøteTittel');
+            if (h2) h2.textContent = møte.tittel || '';
+            const besk = document.getElementById('deltakerMøteBeskrivelse');
+            if (besk) besk.textContent = møte.beskrivelse || '';
             if (møte.heldagshendelse) {
                 renderDeltakerKalender(møteId, møte, navn, stemmer);
                 return;
@@ -1683,7 +1700,7 @@
                     const antall = Object.values(stemmer).filter(s => s['fritekst_valg'] === 'valgt').length;
                     fritekstHtml = `<div class="fritekst-kort" style="margin-top:16px;">
                         <div class="fritekst-tekst">${møte.fritekstAlternativ}</div>
-                        <div style="font-size:0.82em;color:#92400e;margin-bottom:8px;">${antall > 0 ? antall + ' har valgt dette' : ''}</div>
+                        <div style="font-size:0.82em;color:#991b1b;margin-bottom:8px;">${antall > 0 ? antall + ' har valgt dette' : ''}</div>
                         <button class="velg-knapp ${erValgt?'valgt':''}" onclick="stem('${møteId}','fritekst_valg','valgt')">${erValgt ? '✓ Valgt' : 'Velg dette'}</button>
                     </div>`;
                 }
@@ -1734,16 +1751,15 @@
         }
 
         window.stemKalender = async (møteId, datoStr) => {
-            let navn = localStorage.getItem('deltaker_navn_' + møteId);
+            const lagretNavn = localStorage.getItem('deltaker_navn_' + møteId);
+            const inputNavn  = document.getElementById('deltakerNavnInput')?.value.trim();
+            const navn = lagretNavn || inputNavn;
+
             if (!navn) {
-                navn = document.getElementById('deltakerNavnInput')?.value.trim();
-                if (!navn) {
-                    document.getElementById('deltakerNavnInput').focus();
-                    document.getElementById('deltakerNavnInput').style.borderColor = '#f87171';
-                    setTimeout(() => document.getElementById('deltakerNavnInput').style.borderColor = '', 2000);
-                    return;
-                }
-                localStorage.setItem('deltaker_navn_' + møteId, navn);
+                document.getElementById('deltakerNavnInput').focus();
+                document.getElementById('deltakerNavnInput').style.borderColor = '#f87171';
+                setTimeout(() => document.getElementById('deltakerNavnInput').style.borderColor = '', 2000);
+                return;
             }
             try {
                 const snap = await getDoc(doc(db, 'schedule_moter', møteId));
