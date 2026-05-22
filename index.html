@@ -294,12 +294,6 @@
         .deltaker-dag .dag-nr { font-size: 13px; font-weight: 700; }
         .deltaker-dag .dag-svar { font-size: 9px; font-weight: 700; font-family: 'Syne', sans-serif; }
         .deltaker-dag.kan { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
-        .deltaker-dag.kan-ikke { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
-        @media (hover: hover) {
-            .deltaker-dag:hover:not(.tom):not(.kan):not(.kan-ikke) { border-color: #6ee7b7; background: #d1fae5; color: #065f46; }
-            .deltaker-dag.kan:hover { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
-            .deltaker-dag.kan-ikke:hover { background: var(--primær-lys); border-color: var(--primær-mid); color: var(--tekst); }
-        }
         .timeplan-nav {
             display: flex; align-items: center; justify-content: space-between;
             margin-bottom: 12px;
@@ -554,10 +548,7 @@
         }
         .stemme-knapp { border-color: #6ee7b7; }
         .stemme-knapp:hover { border-color: #6ee7b7; background: #d1fae5; color: #065f46; }
-        .stemme-knapp.kan-ikke-knapp { border-color: #fca5a5; }
-        .stemme-knapp.kan-ikke-knapp:hover { border-color: #fca5a5; background: #fee2e2; color: #991b1b; }
         .stemme-knapp.valgt-ja { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
-        .stemme-knapp.valgt-nei { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
         .stemme-knapp.valgt { background: var(--primær); color: white; border-color: var(--primær); }
 
         .suksess-melding {
@@ -670,7 +661,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Logg inn for å arrangere møter</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.53</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.54</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -680,7 +671,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.53</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.54</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -1001,7 +992,7 @@
                         tabell += `<tr><td><strong>${navn}</strong></td>`;
                         møte.tider.forEach(tid => {
                             const v = stemmer[navn]?.[tid] || '–';
-                            tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 8px;" class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}">${v==='ja'?'✓':v==='nei'?'✗':'–'}</td>`;
+                            tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 8px;" class="${v==='ja'?'stemme-ja':''}">​${v==='ja'?'✓':'–'}</td>`;
                         });
                         tabell += '</tr>';
                     });
@@ -1021,7 +1012,7 @@
                             tabell += `<tr><td><strong>${navn}</strong></td>`;
                             tiderIDato.forEach(tid => {
                                 const v = stemmer[navn]?.[tid] || '–';
-                                tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 10px;" class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}">${v==='ja'?'✓':v==='nei'?'✗':'–'}</td>`;
+                                tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 10px;" class="${v==='ja'?'stemme-ja':''}">​${v==='ja'?'✓':'–'}</td>`;
                             });
                             tabell += '</tr>';
                         });
@@ -1541,28 +1532,23 @@
                 });
                 const slutt = new Date(new Date(tid).getTime() + (møte.varighet||60)*60000);
                 const sluttStr = slutt.toLocaleString('no-NO', {hour:'2-digit', minute:'2-digit'});
-                let ja = 0, nei = 0;
+                let ja = 0;
                 Object.values(stemmer).forEach(s => {
                     if (s[tid] === 'ja') ja++;
-                    if (s[tid] === 'nei') nei++;
                 });
                 const minStemme = navn ? (stemmer[navn]?.[tid] || null) : null;
                 const tidEscaped = tid.replace(/'/g, "\\'");
-                const kantFarge = minStemme === 'ja' ? '#6ee7b7' : minStemme === 'nei' ? '#fca5a5' : 'var(--primær)';
-                const kanTekst  = minStemme === 'ja'  ? '✓ Kan'      : 'Kan';
-                const ikkeKanTekst = minStemme === 'nei' ? '✗ Kan ikke' : 'Kan ikke';
-                // Toggle: clicking active button clears vote
-                const kanStemme  = minStemme === 'ja'  ? 'clear' : 'ja';
-                const ikkeKanStemme = minStemme === 'nei' ? 'clear' : 'nei';
+                const kantFarge = minStemme === 'ja' ? '#6ee7b7' : 'var(--primær)';
+                const kanTekst  = minStemme === 'ja' ? '✓ Kan' : 'Kan';
+                const kanStemme = minStemme === 'ja' ? 'clear' : 'ja';
 
                 return `<div class="tid-kort" style="border-left-color:${kantFarge};">
                     <div class="tid-rad">
                         <div class="tid-tekst">${formatted}–${sluttStr}</div>
-                        <div class="tid-stemmer">✓ ${ja} · ✗ ${nei}</div>
+                        <div class="tid-stemmer">✓ ${ja}</div>
                     </div>
                     <div class="stemme-knapp-gruppe">
-                        <button class="stemme-knapp kan-knapp ${minStemme==='ja'?'valgt-ja':''}" onclick="stem('${møteId}','${tidEscaped}','${kanStemme}')">${kanTekst}</button>
-                        <button class="stemme-knapp kan-ikke-knapp ${minStemme==='nei'?'valgt-nei':''}" onclick="stem('${møteId}','${tidEscaped}','${ikkeKanStemme}')">${ikkeKanTekst}</button>
+                        <button class="stemme-knapp ${minStemme==='ja'?'valgt-ja':''}" onclick="stem('${møteId}','${tidEscaped}','${kanStemme}')">${kanTekst}</button>
                     </div>
                 </div>`;
             }).join('');
@@ -1588,8 +1574,8 @@
                 const jaPerTid = {};
                 møte.tider.forEach(tid => {
                     jaPerTid[tid] = Object.values(stemmer).filter(s => s[tid] === 'ja').length;
-                });
-                const maxJa = Math.max(...Object.values(jaPerTid), 0);
+            });
+            const maxJa = Math.max(...Object.values(jaPerTid), 0);
                 const alleKanTider = møte.tider.filter(t => jaPerTid[t] === antallDeltakere);
 
                 function tidFarge(tid) {
@@ -1621,7 +1607,7 @@
                         tabell += `<tr><td><strong>${deltakerNavn}</strong></td>`;
                         tiderIDato.forEach(tid => {
                             const v = stemmer[deltakerNavn]?.[tid] || '–';
-                            tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 10px;" class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}">${v==='ja'?'✓':v==='nei'?'✗':'–'}</td>`;
+                            tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 10px;" class="${v==='ja'?'stemme-ja':''}">​${v==='ja'?'✓':'–'}</td>`;
                         });
                         tabell += '</tr>';
                     });
@@ -1757,7 +1743,7 @@
                         tabell += `<tr><td><strong>${n}</strong></td>`;
                         møte.tider.forEach(d => {
                             const v = stemmer[n]?.[d] || '–';
-                            tabell += `<td style="text-align:center;background:${tidFarge(d)};" class="${v==='ja'?'stemme-ja':v==='nei'?'stemme-nei':''}">${v==='ja'?'✓':v==='nei'?'✗':'–'}</td>`;
+                            tabell += `<td style="text-align:center;background:${tidFarge(d)};" class="${v==='ja'?'stemme-ja':''}">​${v==='ja'?'✓':'–'}</td>`;
                         });
                         tabell += '</tr>';
                     });
