@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="no">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -75,7 +75,7 @@
         #loginOverlay button:hover {
             opacity: 0.9;
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(148, 144, 212, 0.3);
+            box-shadow: 0 4px 12px rgba(59,130,246,0.3);
         }
 
         /* ── Header ── */
@@ -204,7 +204,7 @@
         }
         input:focus, textarea:focus {
             outline: none; border-color: var(--primær);
-            box-shadow: 0 0 0 3px rgba(148,144,212,0.1);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
         textarea { resize: vertical; min-height: 80px; }
 
@@ -329,7 +329,7 @@
         .timeplan-slot:hover { background: var(--primær-lys); }
         .timeplan-slot.hel-time { border-bottom: 2px solid var(--primær-mid); }
         .timeplan-slot.halvtime { border-bottom: 1px solid var(--kant); }
-        .timeplan-slot.stiplet { border-bottom: 1px dashed rgba(148,144,212,0.3); }
+        .timeplan-slot.stiplet { border-bottom: 1px dashed rgba(59,130,246,0.2); }
         .timeplan-tid {
             width: 48px; min-width: 48px;
             font-size: 11px; color: var(--tekst-sek);
@@ -372,7 +372,7 @@
         }
         input[type="date"]:focus {
             outline: none; border-color: var(--primær);
-            box-shadow: 0 0 0 3px rgba(148,144,212,0.1);
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
         /* Timeplan med scrollbar */
         .timeplan-wrapper {
@@ -425,16 +425,7 @@
 
         /* ── Participant ── */
         /* ── Blå tema for deltaker-panel ── */
-        #deltakerPanel {
-            --d-primær: #3b82f6;
-            --d-primær-lys: #eff6ff;
-            --d-primær-mid: #bfdbfe;
-            --d-primær-mørk: #1e3a5f;
-            --d-kant: #bfdbfe;
-            --d-tekst-sek: #4b7ab0;
-            --d-bg: #f0f7ff;
-        }
-        #deltakerPanel { background: var(--d-bg); min-height: 100vh; }
+        #deltakerPanel { background: var(--bg); min-height: 100vh; }
 
         #deltakerPanel .møte-header {
             background: white;
@@ -445,46 +436,27 @@
         #deltakerPanel .møte-header p { color: var(--tekst-sek); }
 
         #deltakerPanel .kort {
-            border-color: var(--d-kant);
+            border-color: var(--kant);
         }
 
         #deltakerPanel .tid-kort {
-            border: 1px solid var(--d-kant);
-            border-left: 4px solid var(--d-primær);
+            border: 1px solid var(--kant);
+            border-left: 4px solid var(--primær);
         }
-        #deltakerPanel .tid-tekst { color: var(--d-primær-mørk); }
-        #deltakerPanel .tid-stemmer { color: var(--d-tekst-sek); }
+        #deltakerPanel .tid-tekst { color: var(--primær-mørk); }
+        #deltakerPanel .tid-stemmer { color: var(--tekst-sek); }
 
         #deltakerPanel input[type="text"] {
-            border-color: var(--d-kant);
+            border-color: var(--kant);
         }
         #deltakerPanel input[type="text"]:focus {
-            border-color: var(--d-primær);
+            border-color: var(--primær);
             box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
         }
 
-        #deltakerPanel label { color: var(--d-primær-mørk); }
+        #deltakerPanel label { color: var(--primær-mørk); }
 
-        #deltakerPanel .suksess-melding {
-            background: var(--d-primær-lys);
-            color: var(--d-primær-mørk);
-            border-color: var(--d-primær);
-        }
 
-        #deltakerPanel .resultater-deltaker { border-top-color: var(--d-kant); }
-        #deltakerPanel .resultater-deltaker-tittel { color: var(--d-tekst-sek); }
-
-        #deltakerPanel .resultater-tabell th { background: var(--d-primær-lys); color: var(--d-primær-mørk); border-bottom-color: var(--d-kant); }
-        #deltakerPanel .resultater-tabell td { border-bottom-color: var(--d-kant); }
-        #deltakerPanel .resultater-tabell tr:hover { background: var(--d-primær-lys); }
-
-        #deltakerPanel .maaned-nav .maaned-label { color: var(--d-primær-mørk); }
-        #deltakerPanel .timeplan-nav-knapp { border-color: var(--d-kant); color: var(--d-tekst-sek); }
-        #deltakerPanel .timeplan-nav-knapp:hover { background: var(--d-primær-lys); color: var(--d-primær); border-color: var(--d-primær-mid); }
-        #deltakerPanel .maaned-dag-header { color: var(--d-tekst-sek); }
-        #deltakerPanel .maaned-dag { background: white; color: var(--d-primær-mørk); }
-        #deltakerPanel .maaned-dag.i-dag { border-color: var(--d-primær-mid); }
-        #deltakerPanel .maaned-dag.valgt { background: var(--d-primær); border-color: var(--d-primær); color: white; }
 
         #deltakerPanel .fritekst-kort {
             background: #fff5f5;
@@ -501,11 +473,8 @@
         #deltakerPanel .velg-knapp.valgt { background: #ef4444; color: white; border-color: #ef4444; font-weight: 900; }
 
         /* Override alle gjenværende lilla */
-        #deltakerPanel .tid-kort { border-left-color: var(--d-primær); }
-        #deltakerPanel .deling-boks { background: var(--d-primær-lys); border-color: var(--d-primær-mid); }
-        #deltakerPanel .resultater-tabell th { background: var(--d-primær-lys); color: var(--d-primær-mørk); border-bottom-color: var(--d-kant); }
-        #deltakerPanel .resultater-tabell tr:hover { background: var(--d-primær-lys); }
-        /* hover handled by @media (hover: hover) above */
+        #deltakerPanel .tid-kort { border-left-color: var(--primær); }
+        #deltakerPanel .deling-boks { background: var(--primær-lys); border-color: var(--primær-mid); }
         #deltakerPanel .suksess-melding {
             background: #3b82f6;
             color: white;
@@ -607,14 +576,7 @@
             .knapp-gruppe button { width: 100%; }
         }
 
-        @media (max-width: 600px) {
-            /* ── Admin: én panel om gangen ── */
-            #detaljSection { display: none !important; }
-            #detaljSection.vis-mobil { display: block !important; }
-            #møteKort { display: block; }
-            #møteKort.skjult-mobil { display: none; }
-
-        .mobil-tilbake {
+                .mobil-tilbake {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -628,10 +590,17 @@
             cursor: pointer;
         }
 
+        @media (max-width: 600px) {
+            /* ── Admin: one panel at a time ── */
+            #detaljSection { display: none !important; }
+            #detaljSection.vis-mobil { display: block !important; }
+            #møteKort { display: block; }
+            #møteKort.skjult-mobil { display: none; }
+
             /* ── Timeplan: større touchmål ── */
             .timeplan-slot { height: 32px; }
             .timeplan-slot.hel-time { border-bottom: 2px solid var(--primær-mid); }
-            .timeplan-slot.stiplet { border-bottom: 1px dashed rgba(148,144,212,0.3); }
+            .timeplan-slot.stiplet { border-bottom: 1px dashed rgba(59,130,246,0.2); }
             .timeplan-wrapper { height: 320px; }
             .timeplan-tid { font-size: 12px; padding: 6px; width: 44px; min-width: 44px; }
 
@@ -661,7 +630,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Sign in to organize meetings</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.61</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.62</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -671,7 +640,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.61</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.62</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
