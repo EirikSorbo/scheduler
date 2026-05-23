@@ -604,7 +604,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Log in to organize meetings</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.60</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.62</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -614,7 +614,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.60</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.62</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="user-name" id="brukerNavn"></div>
@@ -750,7 +750,8 @@
                 const q = query(collection(db, 'schedule_moter'), where('uid', '==', user.uid));
                 unsubscribeListener = onSnapshot(q, snapshot => {
                     snapshot.forEach(d => {
-                        meetings[d.id] = d.data();
+                        const _r = d.data();
+                        meetings[d.id] = {..._r, slots: _r.tider||[], votes: _r.stemmer||{}};
                     });
                     // Fjern meetings som er slettet fra Firestore
                     const firebaseIds = snapshot.docs.map(d => d.id);
@@ -804,7 +805,7 @@
                 const antall = Object.keys(m.votes || {}).length;
                 return `<div class="meeting-item ${aktiv}" onclick="selectMeeting('${id}')">
                     <div class="meeting-title">${m.tittel}</div>
-                    <div class="meeting-meta">${m.tider.length} ${m.heldagshendelse ? 'days' : 'times'} · ${antall} participant(s)</div>
+                    <div class="meeting-meta">${m.slots.length} ${m.heldagshendelse ? 'days' : 'times'} · ${antall} participant(s)</div>
                 </div>`;
             }).join('');
         }
@@ -857,27 +858,27 @@
 
             const link = window.location.origin + window.location.pathname + '?møte=' + meetingId;
 
-            const votes = meeting.stemmer || {};
+            const votes = meeting.votes || {};
             const deltakere = Object.keys(votes);
             const antallParticipante = deltakere.length;
 
             // Grupper times per dato
             const dateGroups = {};
-            meeting.tider.forEach(slot => {
+            meeting.slots.forEach(slot => {
                 const dato = meeting.heldagshendelse
-                    ? new Date(slot + 'T00:00:00').toLocaleDateString('no-NO', { weekday:'short', day:'numeric', month:'short' })
-                    : new Date(slot).toLocaleDateString('no-NO', { weekday:'short', day:'numeric', month:'short' });
+                    ? new Date(slot + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' })
+                    : new Date(slot).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
                 if (!dateGroups[dato]) dateGroups[dato] = [];
                 dateGroups[dato].push(slot);
             });
 
             // Tell ja per slot
             const availablePerSlot = {};
-            meeting.tider.forEach(slot => {
+            meeting.slots.forEach(slot => {
                 availablePerSlot[slot] = deltakere.filter(n => votes[n]?.[slot] === 'ja').length;
             });
             const maxAvailable = Math.max(...Object.values(availablePerSlot), 0);
-            const alleAvailableTimes = meeting.tider.filter(t => availablePerSlot[t] === antallParticipante && antallParticipante > 0);
+            const alleAvailableTimes = meeting.slots.filter(t => availablePerSlot[t] === antallParticipante && antallParticipante > 0);
 
             function slotColor(slot) {
                 if (antallParticipante === 0) return 'var(--primær-lys)';
@@ -894,24 +895,24 @@
             } else if (alleAvailableTimes.length > 0) {
                 const timeTexts = alleAvailableTimes.map(t => {
                     if (meeting.heldagshendelse) {
-                        return new Date(t + 'T00:00:00').toLocaleDateString('no-NO', { weekday:'short', day:'numeric', month:'short' });
+                        return new Date(t + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
                     }
                     const s = new Date(t), e = new Date(s.getTime() + (meeting.varighet||60)*60000);
-                    const fmt = d => d.toLocaleString('no-NO',{hour:'2-digit',minute:'2-digit'});
-                    return s.toLocaleString('no-NO',{weekday:'short',day:'numeric',month:'short'}) + ' ' + fmt(s) + '–' + fmt(e);
+                    const fmt = d => d.toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
+                    return s.toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short'}) + ' ' + fmt(s) + '–' + fmt(e);
                 }).join(', ');
                 summaryText = `<div style="background:#d1fae5;border:1px solid #6ee7b7;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:0.9em;"><strong>Everyone available:</strong><br>${timeTexts.split(', ').join('<br>')}</div>`;
             } else if (maxAvailable > 0) {
-                const besteTimes = meeting.tider.filter(t => availablePerSlot[t] === maxAvailable);
+                const besteTimes = meeting.slots.filter(t => availablePerSlot[t] === maxAvailable);
                 const bestTexts = besteTimes.map(t => {
                     const ikkeAvailableDenne = deltakere.filter(n => votes[n]?.[t] !== 'ja');
                     const parenthetical = ikkeAvailableDenne.length ? ` (${ikkeAvailableDenne.join(', ')} can't)` : '';
                     if (meeting.heldagshendelse) {
-                        return new Date(t + 'T00:00:00').toLocaleDateString('no-NO', { weekday:'short', day:'numeric', month:'short' }) + parenthetical;
+                        return new Date(t + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' }) + parenthetical;
                     }
                     const s = new Date(t), e = new Date(s.getTime() + (meeting.varighet||60)*60000);
-                    const fmt = d => d.toLocaleString('no-NO',{hour:'2-digit',minute:'2-digit'});
-                    return s.toLocaleString('no-NO',{weekday:'short',day:'numeric',month:'short'}) + ' ' + fmt(s) + '–' + fmt(e) + parenthetical;
+                    const fmt = d => d.toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
+                    return s.toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short'}) + ' ' + fmt(s) + '–' + fmt(e) + parenthetical;
                 }).join('<br>');
                 summaryText = `<div style="background:#fef3c7;border:1px solid #fbbf24;border-radius:var(--rs);padding:10px 14px;margin-bottom:12px;font-size:0.9em;"><strong>Most available (${maxAvailable}/${antallParticipante}):</strong><br>${bestTexts}</div>`;
             }
@@ -926,14 +927,14 @@
                 if (meeting.heldagshendelse) {
                     // Heldagshendelse: én table, én kolonne per dag
                     table += '<table class="resultater-table" style="margin-top:0;margin-bottom:12px;"><thead><tr><th style="min-width:80px;">Participant</th>';
-                    meeting.tider.forEach(slot => {
-                        const dato = new Date(slot + 'T00:00:00').toLocaleDateString('no-NO', { weekday:'short', day:'numeric', month:'short' });
+                    meeting.slots.forEach(slot => {
+                        const dato = new Date(slot + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
                         table += `<th style="text-align:center;background:${slotColor(slot)};padding:6px 8px;font-size:12px;">${dato}</th>`;
                     });
                     table += '</tr></thead><tbody>';
                     deltakere.forEach(name => {
                         table += `<tr><td><strong>${name}</strong></td>`;
-                        meeting.tider.forEach(slot => {
+                        meeting.slots.forEach(slot => {
                             const v = votes[name]?.[slot] || '–';
                             table += `<td style="text-align:center;background:${slotColor(slot)};padding:6px 8px;" class="${v==='ja'?'vote-ja':''}">${v==='ja'?'✓':'<span style="color:#f87171;">✗</span>'}</td>`;
                         });
@@ -947,7 +948,7 @@
                         table += '<table class="resultater-table" style="margin-top:0;margin-bottom:12px;"><thead><tr><th style="min-width:80px;">Participant</th>';
                         timesIDate.forEach(slot => {
                             const s = new Date(slot), e = new Date(s.getTime() + (meeting.varighet||60)*60000);
-                            const fmt = d => d.toLocaleString('no-NO',{hour:'2-digit',minute:'2-digit'});
+                            const fmt = d => d.toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
                             table += `<th style="text-align:center;background:${slotColor(slot)};padding:6px 10px;">${fmt(s)}<br><span style="font-weight:400;font-size:10px;opacity:0.7;">–${fmt(e)}</span></th>`;
                         });
                         table += '</tr></thead><tbody>';
@@ -1000,15 +1001,15 @@
                 </div>`}
                 <div class="form-gruppe">
                     <label>${meeting.heldagshendelse ? 'Days' : 'Times'}</label>
-                    ${meeting.tider.map(slot => {
+                    ${meeting.slots.map(slot => {
                         if (meeting.heldagshendelse) {
-                            const dato = new Date(slot + 'T00:00:00').toLocaleDateString('no-NO', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+                            const dato = new Date(slot + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
                             return `<div style="padding:8px;background:var(--primær-lys);border-radius:6px;margin-bottom:8px;">${dato}</div>`;
                         }
                         const start = new Date(slot);
                         const end = new Date(start.getTime() + (meeting.varighet||60) * 60000);
-                        const fmt = d => d.toLocaleString('no-NO', { hour:'2-digit', minute:'2-digit' });
-                        const dag = start.toLocaleString('no-NO', { year:'numeric', month:'short', day:'numeric' });
+                        const fmt = d => d.toLocaleString('en-GB', { hour:'2-digit', minute:'2-digit' ,hour12:false});
+                        const dag = start.toLocaleString('en-GB', { year:'numeric', month:'short', day:'numeric' });
                         return `<div style="padding:8px;background:var(--primær-lys);border-radius:6px;margin-bottom:8px;">${dag}, ${fmt(start)}–${fmt(end)}</div>`;
                     }).join('')}
                 </div>
@@ -1030,8 +1031,8 @@
             document.getElementById('detaljTitle').textContent = isNew ? 'New meeting' : 'Edit meeting';
             document.getElementById('detaljSection').classList.add('vis');
 
-            if (meeting.tider && meeting.tider.length > 0 && meeting.tider[0] && !isAllDay) {
-                timeplanDate = new Date(meeting.tider[0]);
+            if (meeting.slots && meeting.slots.length > 0 && meeting.slots[0] && !isAllDay) {
+                timeplanDate = new Date(meeting.slots[0]);
                 timeplanDate.setHours(0,0,0,0);
             } else {
                 timeplanDate = new Date();
@@ -1124,7 +1125,7 @@
             const meeting = meetings[currentMeetingId];
             if (!meeting) return;
             meeting.heldagshendelse = isAllDay;
-            meeting.tider = [];
+            meeting.slots = [];
             document.getElementById('toggleTime').classList.toggle('aktiv', !isAllDay);
             document.getElementById('toggleHeldag').classList.toggle('aktiv', isAllDay);
             document.getElementById('tidspunktSeksjon').style.display = isAllDay ? 'none' : '';
@@ -1150,7 +1151,7 @@
             const mnd = maanedDate.getMonth();
             const iDag = new Date(); iDag.setHours(0,0,0,0);
 
-            label.textContent = maanedDate.toLocaleDateString('no-NO', { month:'long', year:'numeric' });
+            label.textContent = maanedDate.toLocaleDateString('en-GB', { month:'long', year:'numeric' });
 
             const dagNavn = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
             let html = dagNavn.map(d => `<div class="maaned-dag-header">${d}</div>`).join('');
@@ -1182,9 +1183,9 @@
         window.toggleDay = (dateStr) => {
             const meeting = meetings[currentMeetingId];
             if (!meeting) return;
-            const idx = meeting.tider.indexOf(dateStr);
-            if (idx >= 0) meeting.tider.splice(idx, 1);
-            else { meeting.tider.push(dateStr); meeting.tider.sort(); }
+            const idx = meeting.slots.indexOf(dateStr);
+            if (idx >= 0) meeting.slots.splice(idx, 1);
+            else { meeting.slots.push(dateStr); meeting.slots.sort(); }
             updateMonthCalendar();
         };
 
@@ -1208,7 +1209,7 @@
             const slotHeight = isMobile() ? 32 : 18;
             const blockHeight = (varighet / slotMinutes) * slotHeight;
 
-            const dateLabel = timeplanDate.toLocaleDateString('no-NO', { weekday:'long', day:'numeric', month:'long' });
+            const dateLabel = timeplanDate.toLocaleDateString('en-GB', { weekday:'long', day:'numeric', month:'long' });
             const labelEl = document.getElementById('timeplanDateLabel');
             if (labelEl) labelEl.textContent = dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1);
 
@@ -1288,12 +1289,12 @@
         window.toggleTime = (iso) => {
             const meeting = meetings[currentMeetingId];
             if (!meeting) return;
-            const idx = meeting.tider.indexOf(iso);
+            const idx = meeting.slots.indexOf(iso);
             if (idx >= 0) {
-                meeting.tider.splice(idx, 1);
+                meeting.slots.splice(idx, 1);
             } else {
-                meeting.tider.push(iso);
-                meeting.tider.sort();
+                meeting.slots.push(iso);
+                meeting.slots.sort();
             }
             updateSchedule();
         };
@@ -1311,9 +1312,9 @@
             meeting.varighet = parseInt(document.getElementById('editDuration')?.value || 60);
             meeting.heldagshendelse = meeting.heldagshendelse || false;
             meeting.fritekstAlternativ = document.getElementById('editFreeText')?.value.trim() || '';
-            meeting.tider = meeting.tider.filter(t => t);
+            meeting.slots = meeting.slots.filter(t => t);
 
-            if (!meeting.tittel || meeting.tider.length === 0) {
+            if (!meeting.tittel || meeting.slots.length === 0) {
                 alert('Please enter a title and at least one time');
                 return;
             }
@@ -1321,10 +1322,11 @@
             const isNew  = currentMeetingId.startsWith('ny_');
             const nyId  = isNew ? Date.now().toString() : currentMeetingId;
             meeting.uid    = currentUser.uid;
-            if (!meeting.stemmer) meeting.stemmer = {};
+            if (!meeting.votes) meeting.votes = {};
 
             try {
-                await setDoc(doc(db, 'schedule_moter', nyId), meeting);
+                const _save = {tittel:meeting.tittel,beskrivelse:meeting.beskrivelse,uid:meeting.uid,varighet:meeting.varighet,heldagshendelse:meeting.heldagshendelse,fritekstAlternativ:meeting.fritekstAlternativ,tider:meeting.slots||[],stemmer:meeting.votes||{}};
+                await setDoc(doc(db, 'schedule_moter', nyId), _save);
                 if (isNew) {
                     delete meetings[currentMeetingId];
                     meetings[nyId] = meeting;
@@ -1394,7 +1396,8 @@
                     document.getElementById('deltakerMøteTitle').textContent = 'Meeting not found';
                     return;
                 }
-                const meeting = snap.data();
+                const _raw = snap.data();
+                const meeting = {..._raw, slots: _raw.tider||[], votes: _raw.stemmer||{}};
                 document.getElementById('deltakerMøteTitle').textContent = meeting.tittel || '';
                 document.getElementById('participantMeetingDesc').textContent = meeting.beskrivelse || '';
 
@@ -1419,8 +1422,9 @@
                     // Sjekk om name er tatt (uten å låse — bare vis advarsel)
                     getDoc(doc(db, 'schedule_moter', meetingIdFromUrl)).then(snap => {
                         if (!snap.exists()) return;
-                        const meeting = snap.data();
-                        const existing = Object.keys(meeting.stemmer || {});
+                        const _raw = snap.data();
+                const meeting = {..._raw, slots: _raw.tider||[], votes: _raw.stemmer||{}};
+                        const existing = Object.keys(meeting.votes || {});
                         const lagret = localStorage.getItem('participant_name_' + meetingIdFromUrl);
                         if (existing.includes(name) && lagret !== name) {
                             inp.style.borderColor = '#f87171';
@@ -1444,7 +1448,7 @@
 
         function renderParticipantTimes(meetingId, meeting) {
             const name    = localStorage.getItem('participant_name_' + meetingId) || null;
-            const votes = meeting.stemmer || {};
+            const votes = meeting.votes || {};
 
             // Vis/skjul meeting-header basert på om name er oppgitt
             const møteHeaderEl = document.getElementById('møteHeader');
@@ -1468,13 +1472,13 @@
             }
 
             // ── Vanlige slot-kort ──
-            const timesHtml = meeting.tider.map(slot => {
-                const formatted = new Date(slot).toLocaleString('no-NO', {
+            const timesHtml = meeting.slots.map(slot => {
+                const formatted = new Date(slot).toLocaleString('en-GB', {
                     weekday:'long', year:'numeric', month:'long',
                     day:'numeric', hour:'2-digit', minute:'2-digit'
-                });
+                ,hour12:false});
                 const endTime2 = new Date(new Date(slot).getTime() + (meeting.varighet||60)*60000);
-                const endStr = endTime2.toLocaleString('no-NO', {hour:'2-digit', minute:'2-digit'});
+                const endStr = endTime2.toLocaleString('en-GB', {hour:'2-digit', minute:'2-digit',hour12:false});
                 let ja = 0;
                 Object.values(votes).forEach(s => {
                     if (s[slot] === 'ja') ja++;
@@ -1515,11 +1519,11 @@
             let resultsHtml = '';
             if (antallParticipante > 0 && name) {
                 const availablePerSlot = {};
-                meeting.tider.forEach(slot => {
+                meeting.slots.forEach(slot => {
                     availablePerSlot[slot] = Object.values(votes).filter(s => s[slot] === 'ja').length;
             });
             const maxAvailable = Math.max(...Object.values(availablePerSlot), 0);
-                const alleAvailableTimes = meeting.tider.filter(t => availablePerSlot[t] === antallParticipante);
+                const alleAvailableTimes = meeting.slots.filter(t => availablePerSlot[t] === antallParticipante);
 
                 function slotColor(slot) {
                     const ja = availablePerSlot[slot] || 0;
@@ -1530,8 +1534,8 @@
 
                 // Grupper per dato
                 const dateGroups = {};
-                meeting.tider.forEach(slot => {
-                    const dato = new Date(slot).toLocaleDateString('no-NO', { weekday:'short', day:'numeric', month:'short' });
+                meeting.slots.forEach(slot => {
+                    const dato = new Date(slot).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
                     if (!dateGroups[dato]) dateGroups[dato] = [];
                     dateGroups[dato].push(slot);
                 });
@@ -1542,7 +1546,7 @@
                     table += '<table class="resultater-table" style="margin-top:0;margin-bottom:12px;"><thead><tr><th style="min-width:80px;">Participant</th>';
                     timesIDate.forEach(slot => {
                         const s = new Date(slot), e = new Date(s.getTime() + (meeting.varighet||60)*60000);
-                        const fmt = d => d.toLocaleString('no-NO',{hour:'2-digit',minute:'2-digit'});
+                        const fmt = d => d.toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',hour12:false});
                         table += `<th style="text-align:center;background:${slotColor(slot)};padding:6px 10px;">${fmt(s)}<br><span style="font-weight:400;font-size:10px;opacity:0.7;">–${fmt(e)}</span></th>`;
                     });
                     table += '</tr></thead><tbody>';
@@ -1574,25 +1578,25 @@
         let participantMonthSet = false;
 
         function renderParticipantKalender(meetingId, meeting, name, votes) {
-            const selectedDates = new Set(meeting.tider || []);
+            const selectedDates = new Set(meeting.slots || []);
             const myVotes = name ? (votes[name] || {}) : {};
 
             // Sett participantMonth til firstDate dato kun firstDate gang
-            if (!participantMonthSet && meeting.tider?.length > 0) {
-                const firstDate = new Date(meeting.tider[0] + 'T00:00:00');
+            if (!participantMonthSet && meeting.slots?.length > 0) {
+                const firstDate = new Date(meeting.slots[0] + 'T00:00:00');
                 participantMonth = new Date(firstDate.getFullYear(), firstDate.getMonth(), 1);
                 participantMonthSet = true;
             }
 
             // Finn alle måneder med selected days - for indikator
-            const månederMedDays = [...new Set(meeting.tider.map(t => t.slice(0,7)))].sort();
+            const månederMedDays = [...new Set(meeting.slots.map(t => t.slice(0,7)))].sort();
             const monthCount = månederMedDays.length;
 
             function buildCalendar() {
                 const år = participantMonth.getFullYear();
                 const mnd = participantMonth.getMonth();
                 const currentMonthKey = `${år}-${String(mnd+1).padStart(2,'0')}`;
-                const label = participantMonth.toLocaleDateString('no-NO', { month:'long', year:'numeric' });
+                const label = participantMonth.toLocaleDateString('en-GB', { month:'long', year:'numeric' });
 
                 // Always set title in header (may have been reset)
 
@@ -1667,10 +1671,10 @@
                 let tableHtml = '';
                 if (antallParticipante > 0 && name) {
                     const availablePerDay = {};
-                    meeting.tider.forEach(d => { availablePerDay[d] = Object.values(votes).filter(s => s[d] === 'ja').length; });
+                    meeting.slots.forEach(d => { availablePerDay[d] = Object.values(votes).filter(s => s[d] === 'ja').length; });
                     const maxAvailable = Math.max(...Object.values(availablePerDay), 0);
 
-                    const fmt = d => new Date(d + 'T00:00:00').toLocaleDateString('no-NO', { weekday:'short', day:'numeric', month:'short' });
+                    const fmt = d => new Date(d + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' });
                     const slotColor = d => {
                         const ja = availablePerDay[d] || 0;
                         if (ja === antallParticipante) return '#d1fae5';
@@ -1680,11 +1684,11 @@
 
                     let table = '<div style="overflow-x:auto;margin-top:20px;border-top:2px solid var(--kant);padding-top:16px;"><div style="font-family:\'Syne\',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--tekst-sek);margin-bottom:8px;">Overview</div>';
                     table += '<table class="resultater-table"><thead><tr><th>Participant</th>';
-                    meeting.tider.forEach(d => { table += `<th style="text-align:center;background:${slotColor(d)};padding:6px 8px;font-size:11px;">${fmt(d)}</th>`; });
+                    meeting.slots.forEach(d => { table += `<th style="text-align:center;background:${slotColor(d)};padding:6px 8px;font-size:11px;">${fmt(d)}</th>`; });
                     table += '</tr></thead><tbody>';
                     Object.keys(votes).forEach(n => {
                         table += `<tr><td><strong>${n}</strong></td>`;
-                        meeting.tider.forEach(d => {
+                        meeting.slots.forEach(d => {
                             const v = votes[n]?.[d] || '–';
                             table += `<td style="text-align:center;background:${slotColor(d)};" class="${v==='ja'?'vote-ja':''}">${v==='ja'?'✓':'<span style="color:#f87171;">✗</span>'}</td>`;
                         });
@@ -1719,10 +1723,11 @@
             try {
                 const snap = await getDoc(doc(db, 'schedule_moter', meetingId));
                 if (!snap.exists()) return;
-                const meeting = snap.data();
+                const _raw = snap.data();
+                const meeting = {..._raw, slots: _raw.tider||[], votes: _raw.stemmer||{}};
 
                 // Check duplicate name
-                const existing = Object.keys(meeting.stemmer || {});
+                const existing = Object.keys(meeting.votes || {});
                 const savedNameCheck = localStorage.getItem('participant_name_' + meetingId);
                 if (existing.includes(name) && savedNameCheck !== name) {
                     const inp = document.getElementById('participantNameInput');
@@ -1736,13 +1741,14 @@
                 }
 
                 localStorage.setItem('participant_name_' + meetingId, name);
-                if (!meeting.stemmer) meeting.stemmer = {};
-                if (!meeting.stemmer[name]) meeting.stemmer[name] = {};
+                if (!meeting.votes) meeting.votes = {};
+                if (!meeting.votes[name]) meeting.votes[name] = {};
                 // All-day event: toggle available/remove (no unavailable)
-                const current = meeting.stemmer[name][dateStr];
-                if (!current || current === 'nei') meeting.stemmer[name][dateStr] = 'ja';
-                else delete meeting.stemmer[name][dateStr];
-                await setDoc(doc(db, 'schedule_moter', meetingId), meeting);
+                const current = meeting.votes[name][dateStr];
+                if (!current || current === 'nei') meeting.votes[name][dateStr] = 'ja';
+                else delete meeting.votes[name][dateStr];
+                const _s = {tittel:meeting.tittel,beskrivelse:meeting.beskrivelse,uid:meeting.uid||'',varighet:meeting.varighet||60,heldagshendelse:meeting.heldagshendelse||false,fritekstAlternativ:meeting.fritekstAlternativ||'',tider:meeting.slots||[],stemmer:meeting.votes||{}};
+                await setDoc(doc(db, 'schedule_moter', meetingId), _s);
                 renderParticipantTimes(meetingId, meeting);
             } catch(e) { alert('Error: ' + e.message); }
         };
@@ -1759,10 +1765,11 @@
             try {
                 const snap = await getDoc(doc(db, 'schedule_moter', meetingId));
                 if (!snap.exists()) { alert('This meeting no longer exists'); return; }
-                const meeting = snap.data();
+                const _raw = snap.data();
+                const meeting = {..._raw, slots: _raw.tider||[], votes: _raw.stemmer||{}};
 
                 // Bug 2: Sjekk om navnet tilhører en annen user
-                const existing = Object.keys(meeting.stemmer || {});
+                const existing = Object.keys(meeting.votes || {});
                 const savedName = localStorage.getItem('participant_name_' + meetingId);
                 if (existing.includes(name) && savedName !== name) {
                     const inp = document.getElementById('participantNameInput');
@@ -1774,11 +1781,12 @@
                 }
 
                 localStorage.setItem('participant_name_' + meetingId, name);
-                if (!meeting.stemmer)        meeting.stemmer = {};
-                if (!meeting.stemmer[name])  meeting.stemmer[name] = {};
-                if (vote === 'clear')   delete meeting.stemmer[name][slot];
-                else                      meeting.stemmer[name][slot] = vote;
-                await setDoc(doc(db, 'schedule_moter', meetingId), meeting);
+                if (!meeting.votes)        meeting.votes = {};
+                if (!meeting.votes[name])  meeting.votes[name] = {};
+                if (vote === 'clear')   delete meeting.votes[name][slot];
+                else                      meeting.votes[name][slot] = vote;
+                const _s = {tittel:meeting.tittel,beskrivelse:meeting.beskrivelse,uid:meeting.uid||'',varighet:meeting.varighet||60,heldagshendelse:meeting.heldagshendelse||false,fritekstAlternativ:meeting.fritekstAlternativ||'',tider:meeting.slots||[],stemmer:meeting.votes||{}};
+                await setDoc(doc(db, 'schedule_moter', meetingId), _s);
                 renderParticipantTimes(meetingId, meeting);
             } catch(e) { alert('Error submitting: ' + e.message); }
         };
