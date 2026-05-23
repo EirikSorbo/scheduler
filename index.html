@@ -661,7 +661,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Sign in to organize meetings</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.58</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v1.59</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -671,7 +671,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.58</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v1.59</span></div>
         <div class="header-handlinger">
             <div>
                 <div class="bruker-navn" id="brukerNavn"></div>
@@ -916,7 +916,12 @@
 
             const stemmer = møte.stemmer || {};
             const deltakere = Object.keys(stemmer);
-            const antallParticipante = deltakere.length;
+            // Only show responses when someone other than the organizer has responded
+            const ORGANIZER = 'Eirik Sørbø';
+            const externalRespondents = deltakere.filter(n => n !== ORGANIZER);
+            const antallParticipante = externalRespondents.length;
+            // Use all participants (incl. organizer) for the table, but only show when others have responded
+            const visResponses = externalRespondents.length > 0;
 
             // Grupper tider per dato
             const datoGrupper = {};
@@ -946,7 +951,7 @@
 
             // Analysetekst
             let analyseTekst = '';
-            if (antallParticipante === 0) {
+            if (!visResponses) {
                 analyseTekst = '<p style="color:var(--tekst-sek);font-size:0.9em;margin-bottom:8px;">No responses yet.</p>';
             } else if (alleAvailableTimes.length > 0) {
                 const tidTexts = alleAvailableTimes.map(t => {
@@ -961,7 +966,7 @@
             } else if (maxJa > 0) {
                 const besteTimes = møte.tider.filter(t => jaPerTid[t] === maxJa);
                 const besteTekster = besteTimes.map(t => {
-                    const ikkeAvailableDenne = deltakere.filter(n => stemmer[n]?.[t] !== 'ja');
+                    const ikkeAvailableDenne = externalRespondents.filter(n => stemmer[n]?.[t] !== 'ja');
                     const parentes = ikkeAvailableDenne.length ? ` (${ikkeAvailableDenne.join(', ')} can't)` : '';
                     if (møte.heldagshendelse) {
                         return new Date(t + 'T00:00:00').toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short' }) + parentes;
@@ -975,7 +980,7 @@
 
             // Tabell
             let tabell = '';
-            if (antallParticipante === 0) {
+            if (!visResponses) {
                 tabell = '<p style="color:var(--tekst-sek);margin-top:8px;">No responses yet.</p>';
             } else {
                 tabell = analyseTekst + '<div style="overflow-x:auto;">';
