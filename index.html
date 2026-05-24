@@ -529,6 +529,10 @@
             margin-top: 24px; text-align: center;
             font-weight: 700; border: 2px solid var(--primær);
         }
+        .suksess-melding--pending {
+            background: #f9f9f9; color: var(--tekst-sek);
+            border-color: var(--kant);
+        }
 
         .fritekst-kort {
             background: #fdf6ec; padding: 10px 14px;
@@ -721,8 +725,8 @@
     <!-- Thank you modal -->
     <div id="thankYouModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;">
         <div style="background:white;border-radius:16px;padding:40px 32px;text-align:center;max-width:320px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.22);">
-            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);margin-bottom:8px;">Thank you for your answers!</div>
-            <div style="font-size:14px;color:var(--tekst-sek);margin-bottom:28px;">Your responses have been saved.</div>
+            <div id="thankYouModalTitle" style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);margin-bottom:8px;">Thank you for your answers!</div>
+            <div id="thankYouModalBody" style="font-size:14px;color:var(--tekst-sek);margin-bottom:28px;">Your responses have been saved.</div>
             <button onclick="document.getElementById('thankYouModal').style.display='none'" style="background:var(--primær);color:white;border:none;border-radius:var(--rs);padding:12px 32px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--primær-mørk)'" onmouseout="this.style.background='var(--primær)'">Close</button>
         </div>
     </div>
@@ -754,6 +758,7 @@
         let redigeringsModus = false;
         let unsubscribeMøter = null; // for å rydde opp onSnapshot-lytter
         let thankYouShown = false;  // shown at most once per session
+        let changesMode   = false;  // true after first popup once user votes again
 
         // ── Sjekk URL umiddelbart ──
         const urlParams     = new URLSearchParams(window.location.search);
@@ -1637,7 +1642,13 @@
                 </div>`;
             }
 
-            const suksess = navn ? '<div class="suksess-melding">✓ Your responses are saved</div>' : '';
+            const mineStemmerForStatus = navn ? (stemmer[navn] || {}) : null;
+            const complete = navn && isComplete(møte, mineStemmerForStatus);
+            const suksess = navn
+                ? (complete
+                    ? '<div class="suksess-melding">✓ Your responses are saved</div>'
+                    : '<div class="suksess-melding suksess-melding--pending">Please select all options</div>')
+                : '';
 
             document.getElementById('deltakerTimesContainer').innerHTML =
                 tiderHtml + fritekstHtml + suksess + resultatHtml;
@@ -1820,21 +1831,42 @@
             } catch(e) { alert('Error: ' + e.message); }
         };
 
-        // ── Thank-you popup logic ──
-        function checkAndShowThankYou(møte, navn, stemmer) {
-            if (thankYouShown || !navn || møte.heldagshendelse) return;
-            const mineStemmer = stemmer[navn] || {};
-            // Every time slot must have a 'ja' or 'nei' answer
+        // ── Completion helper (shared by status bar and popups) ──
+        function isComplete(møte, mineStemmer) {
+            if (!mineStemmer) return false;
             const allAnswered = møte.tider.every(t => mineStemmer[t] === 'ja' || mineStemmer[t] === 'nei');
-            if (!allAnswered) return;
-            // If there is a free-text option and every slot is 'nei', fritekst must also be chosen
+            if (!allAnswered) return false;
             if (møte.fritekstAlternativ) {
                 const allNei = møte.tider.every(t => mineStemmer[t] === 'nei');
-                if (allNei && mineStemmer['fritekst_valg'] !== 'valgt') return;
+                if (allNei && mineStemmer['fritekst_valg'] !== 'valgt') return false;
             }
-            thankYouShown = true;
+            return true;
+        }
+
+        // ── Popup logic ──
+        function checkAndShowThankYou(møte, navn, stemmer) {
+            if (!navn || møte.heldagshendelse) return;
+            const mineStemmer = stemmer[navn] || {};
+            if (!isComplete(møte, mineStemmer)) return;
+
             const modal = document.getElementById('thankYouModal');
-            if (modal) modal.style.display = 'flex';
+            const titleEl = document.getElementById('thankYouModalTitle');
+            const bodyEl  = document.getElementById('thankYouModalBody');
+            if (!modal) return;
+
+            if (!thankYouShown) {
+                // First-ever completion
+                thankYouShown = true;
+                titleEl.textContent = 'Thank you for your answers!';
+                bodyEl.textContent  = 'Your responses have been saved.';
+                modal.style.display = 'flex';
+            } else if (changesMode) {
+                // Re-completion after the user edited answers
+                changesMode = false;
+                titleEl.textContent = 'Your changes are saved';
+                bodyEl.textContent  = 'Your responses have been updated.';
+                modal.style.display = 'flex';
+            }
         }
 
         window.stem = async (møteId, tid, stemme) => {
@@ -1870,6 +1902,7 @@
                 else                      møte.stemmer[navn][tid] = stemme;
                 await setDoc(doc(db, 'schedule_moter', møteId), møte);
                 window._stemJustCalled = true;
+                if (thankYouShown) changesMode = true;
                 renderParticipantTimes(møteId, møte);
             } catch(e) { alert('Error submitting: ' + e.message); }
         };
