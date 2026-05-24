@@ -579,6 +579,21 @@
             .knapp-gruppe button { width: 100%; }
         }
 
+        /* ── Desktop: narrow participant + login UI ── */
+        @media (min-width: 769px) {
+            #deltakerPanel main {
+                max-width: 520px;
+            }
+            #loginOverlay > div {
+                width: 360px;
+                background: var(--hvit);
+                border-radius: var(--r);
+                border: 1px solid var(--kant);
+                padding: 40px 32px;
+                box-shadow: 0 4px 24px rgba(59,130,246,0.08);
+            }
+        }
+
                 .mobil-tilbake {
             display: flex;
             align-items: center;
@@ -706,7 +721,6 @@
     <!-- Thank you modal -->
     <div id="thankYouModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;">
         <div style="background:white;border-radius:16px;padding:40px 32px;text-align:center;max-width:320px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.22);">
-            <div style="font-size:48px;margin-bottom:12px;">🎉</div>
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);margin-bottom:8px;">Thank you for your answers!</div>
             <div style="font-size:14px;color:var(--tekst-sek);margin-bottom:28px;">Your responses have been saved.</div>
             <button onclick="document.getElementById('thankYouModal').style.display='none'" style="background:var(--primær);color:white;border:none;border-radius:var(--rs);padding:12px 32px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--primær-mørk)'" onmouseout="this.style.background='var(--primær)'">Close</button>
