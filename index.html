@@ -519,6 +519,9 @@
         .stemme-knapp:hover { border-color: #6ee7b7; background: #d1fae5; color: #065f46; }
         .stemme-knapp.valgt-ja { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
         .stemme-knapp.valgt { background: var(--primær); color: white; border-color: var(--primær); }
+        .stemme-knapp-nei { border-color: #fca5a5; }
+        .stemme-knapp-nei:hover { border-color: #f87171; background: #fee2e2; color: #991b1b; }
+        .stemme-knapp.valgt-nei { background: #fee2e2; color: #991b1b; border-color: #f87171; }
 
         .suksess-melding {
             background: var(--primær-lys); color: var(--primær-mørk);
@@ -574,24 +577,6 @@
         @media (max-width: 768px) {
             .knapp-gruppe { flex-direction: column; }
             .knapp-gruppe button { width: 100%; }
-        }
-
-        /* ── Desktop: narrow participant UI ── */
-        @media (min-width: 769px) {
-            #deltakerPanel main {
-                max-width: 560px;
-            }
-            #loginOverlay button {
-                min-width: 220px;
-            }
-            #loginOverlay > div {
-                width: 380px;
-                background: var(--hvit);
-                border-radius: var(--r);
-                border: 1px solid var(--kant);
-                padding: 40px 32px;
-                box-shadow: 0 4px 24px rgba(59,130,246,0.08);
-            }
         }
 
                 .mobil-tilbake {
@@ -718,6 +703,16 @@
         </main>
     </div>
 
+    <!-- Thank you modal -->
+    <div id="thankYouModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:10000;align-items:center;justify-content:center;">
+        <div style="background:white;border-radius:16px;padding:40px 32px;text-align:center;max-width:320px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,0.22);">
+            <div style="font-size:48px;margin-bottom:12px;">🎉</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);margin-bottom:8px;">Thank you for your answers!</div>
+            <div style="font-size:14px;color:var(--tekst-sek);margin-bottom:28px;">Your responses have been saved.</div>
+            <button onclick="document.getElementById('thankYouModal').style.display='none'" style="background:var(--primær);color:white;border:none;border-radius:var(--rs);padding:12px 32px;font-family:'Syne',sans-serif;font-weight:700;font-size:14px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='var(--primær-mørk)'" onmouseout="this.style.background='var(--primær)'">Close</button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
@@ -744,6 +739,7 @@
         let møter        = {};
         let redigeringsModus = false;
         let unsubscribeMøter = null; // for å rydde opp onSnapshot-lytter
+        let thankYouShown = false;  // shown at most once per session
 
         // ── Sjekk URL umiddelbart ──
         const urlParams     = new URLSearchParams(window.location.search);
@@ -1535,9 +1531,11 @@
                 });
                 const minStemme = navn ? (stemmer[navn]?.[tid] || null) : null;
                 const tidEscaped = tid.replace(/'/g, "\\'");
-                const kantFarge = minStemme === 'ja' ? '#6ee7b7' : 'var(--primær)';
-                const kanTekst  = minStemme === 'ja' ? '✓ Available' : 'Available';
+                const kantFarge = minStemme === 'ja' ? '#6ee7b7' : minStemme === 'nei' ? '#fca5a5' : 'var(--primær)';
                 const kanStemme = minStemme === 'ja' ? 'clear' : 'ja';
+                const neiStemme = minStemme === 'nei' ? 'clear' : 'nei';
+                const kanTekst  = minStemme === 'ja' ? '✓ Available' : 'Available';
+                const neiTekst  = minStemme === 'nei' ? '✗ Not available' : 'Not available';
 
                 return `<div class="tid-kort" style="border-left-color:${kantFarge};">
                     <div class="tid-rad">
@@ -1546,6 +1544,7 @@
                     </div>
                     <div class="stemme-knapp-gruppe">
                         <button class="stemme-knapp ${minStemme==='ja'?'valgt-ja':''}" onclick="stem('${møteId}','${tidEscaped}','${kanStemme}')">${kanTekst}</button>
+                        <button class="stemme-knapp stemme-knapp-nei ${minStemme==='nei'?'valgt-nei':''}" onclick="stem('${møteId}','${tidEscaped}','${neiStemme}')">${neiTekst}</button>
                     </div>
                 </div>`;
             }).join('');
@@ -1562,6 +1561,12 @@
                     <div style="font-size:0.82em;color:var(--tekst-sek);margin-bottom:8px;">${antallValgt > 0 ? antallValgt + ' selected this' : ''}</div>
                     <button class="velg-knapp ${erValgt?'valgt':''}" onclick="stem('${møteId}','${nøkkelEscaped}','valgt')">${erValgt ? '✓ Selected' : 'Select this'}</button>
                 </div>`;
+            }
+
+            // Check completion and show thank-you popup if triggered by a vote
+            if (window._stemJustCalled) {
+                window._stemJustCalled = false;
+                checkAndShowThankYou(møte, navn, stemmer);
             }
 
             // Resultater for deltaker - samme tabell som admin
@@ -1801,6 +1806,23 @@
             } catch(e) { alert('Error: ' + e.message); }
         };
 
+        // ── Thank-you popup logic ──
+        function checkAndShowThankYou(møte, navn, stemmer) {
+            if (thankYouShown || !navn || møte.heldagshendelse) return;
+            const mineStemmer = stemmer[navn] || {};
+            // Every time slot must have a 'ja' or 'nei' answer
+            const allAnswered = møte.tider.every(t => mineStemmer[t] === 'ja' || mineStemmer[t] === 'nei');
+            if (!allAnswered) return;
+            // If there is a free-text option and every slot is 'nei', fritekst must also be chosen
+            if (møte.fritekstAlternativ) {
+                const allNei = møte.tider.every(t => mineStemmer[t] === 'nei');
+                if (allNei && mineStemmer['fritekst_valg'] !== 'valgt') return;
+            }
+            thankYouShown = true;
+            const modal = document.getElementById('thankYouModal');
+            if (modal) modal.style.display = 'flex';
+        }
+
         window.stem = async (møteId, tid, stemme) => {
             const navn = document.getElementById('deltakerNavnInput').value.trim();
             if (!navn) {
@@ -1833,6 +1855,7 @@
                 if (stemme === 'clear')   delete møte.stemmer[navn][tid];
                 else                      møte.stemmer[navn][tid] = stemme;
                 await setDoc(doc(db, 'schedule_moter', møteId), møte);
+                window._stemJustCalled = true;
                 renderParticipantTimes(møteId, møte);
             } catch(e) { alert('Error submitting: ' + e.message); }
         };
