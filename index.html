@@ -576,6 +576,24 @@
             .knapp-gruppe button { width: 100%; }
         }
 
+        /* ── Desktop: narrow participant UI ── */
+        @media (min-width: 769px) {
+            #deltakerPanel main {
+                max-width: 560px;
+            }
+            #loginOverlay button {
+                min-width: 220px;
+            }
+            #loginOverlay > div {
+                width: 380px;
+                background: var(--hvit);
+                border-radius: var(--r);
+                border: 1px solid var(--kant);
+                padding: 40px 32px;
+                box-shadow: 0 4px 24px rgba(59,130,246,0.08);
+            }
+        }
+
                 .mobil-tilbake {
             display: flex;
             align-items: center;
