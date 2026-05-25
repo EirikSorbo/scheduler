@@ -1673,41 +1673,64 @@
             const antallMåneder = månederMedDays.length;
 
             function byggKalender() {
+                const år = deltakerMaaned.getFullYear();
+                const mnd = deltakerMaaned.getMonth();
+                const currentKey = `${år}-${String(mnd+1).padStart(2,'0')}`;
+                const label = deltakerMaaned.toLocaleDateString('en-GB', { month:'long', year:'numeric' });
+
+                // Sett alltid tittel i header (kan ha blitt nullstilt)
+
+                // Månedindikator-prikker
+                let prikker = '';
+                if (antallMåneder > 1) {
+                    prikker = '<div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px;">' +
+                        månederMedDays.map(m => {
+                            const aktiv = m === currentKey;
+                            return `<div style="width:8px;height:8px;border-radius:50%;background:${aktiv ? 'var(--primær)' : 'var(--kant)'};"></div>`;
+                        }).join('') + '</div>';
+                }
+
+                // Hint hvis neste måned har dager
+                const nesteMndIdx = mnd === 11 ? 0 : mnd + 1;
+                const nesteÅr = mnd === 11 ? år + 1 : år;
+                const nesteMndKey = `${nesteÅr}-${String(nesteMndIdx+1).padStart(2,'0')}`;
+                const nesteHint = månederMedDays.includes(nesteMndKey) ?
+                    `<div style="text-align:center;font-size:15px;margin-top:8px;"><a href="#" onclick="endreParticipantMaaned(1);return false;" style="color:#dc2626;font-weight:700;text-decoration:none;">→ More options next month</a></div>` : '';
+
                 const dagNavn = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-                let html = '';
+                let html = `<div class="maaned-nav" style="margin-bottom:4px;">
+                    <button class="timeplan-nav-knapp" onclick="endreParticipantMaaned(-1)">←</button>
+                    <div class="maaned-label">${label}</div>
+                    <button class="timeplan-nav-knapp" onclick="endreParticipantMaaned(1)">→</button>
+                </div>
+                ${prikker}
+                ${nesteHint}
+                <div class="maaned-grid">`;
 
-                // Render all months with dates stacked vertically — no navigation needed
-                månederMedDays.forEach((mndKey, idx) => {
-                    const [årstall, mndNr] = mndKey.split('-').map(Number);
-                    const label = new Date(årstall, mndNr - 1, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+                html += dagNavn.map(d => `<div class="maaned-dag-header">${d}</div>`).join('');
 
-                    if (idx > 0) html += `<div style="border-top:2px solid var(--kant);margin:24px 0 0;"></div>`;
-                    html += `<div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;margin:${idx === 0 ? '4px' : '16px'} 0 10px;">${label}</div>`;
-                    html += `<div class="maaned-grid">`;
-                    html += dagNavn.map(d => `<div class="maaned-dag-header">${d}</div>`).join('');
+                const førsteDag = new Date(år, mnd, 1);
+                const startOffset = (førsteDag.getDay() + 6) % 7;
+                for (let i = 0; i < startOffset; i++) html += `<div class="deltaker-dag tom"></div>`;
 
-                    const førsteDag = new Date(årstall, mndNr - 1, 1);
-                    const startOffset = (førsteDag.getDay() + 6) % 7;
-                    for (let i = 0; i < startOffset; i++) html += `<div class="deltaker-dag tom"></div>`;
-
-                    const dagerIMnd = new Date(årstall, mndNr, 0).getDate();
-                    for (let dag = 1; dag <= dagerIMnd; dag++) {
-                        const datoStr = `${årstall}-${String(mndNr).padStart(2,'0')}-${String(dag).padStart(2,'0')}`;
-                        if (!valgteStr.has(datoStr)) {
-                            html += `<div class="deltaker-dag" style="opacity:0.25;cursor:default;">${dag}</div>`;
-                            continue;
-                        }
-                        const svar = mineStemmer[datoStr] || null;
-                        let klasse = 'deltaker-dag';
-                        let svarTekst = '';
-                        if (svar === 'ja') { klasse += ' kan'; svarTekst = '✓'; }
-                        html += `<div class="${klasse}" onclick="stemKalender('${møteId}','${datoStr}')">
-                            <div class="dag-nr">${dag}</div>
-                            ${svarTekst ? `<div class="dag-svar">${svarTekst}</div>` : ''}
-                        </div>`;
+                const dagerIMnd = new Date(år, mnd + 1, 0).getDate();
+                for (let dag = 1; dag <= dagerIMnd; dag++) {
+                    const datoStr = `${år}-${String(mnd+1).padStart(2,'0')}-${String(dag).padStart(2,'0')}`;
+                    if (!valgteStr.has(datoStr)) {
+                        html += `<div class="deltaker-dag" style="opacity:0.25;cursor:default;">${dag}</div>`;
+                        continue;
                     }
-                    html += `</div>`;
-                });
+                    const svar = mineStemmer[datoStr] || null;
+                    let klasse = 'deltaker-dag';
+                    let svarTekst = '';
+                    if (svar === 'ja') { klasse += ' kan'; svarTekst = '✓'; }
+                    html += `<div class="${klasse}" onclick="stemKalender('${møteId}','${datoStr}')">
+                        <div class="dag-nr">${dag}</div>
+                        ${svarTekst ? `<div class="dag-svar">${svarTekst}</div>` : ''}
+                    </div>`;
+                }
+                html += '</div>';
+                html += nesteHint;
 
                 // Fritekst
                 let fritekstHtml = '';
@@ -1759,6 +1782,11 @@
             }
 
             byggKalender();
+
+            window.endreParticipantMaaned = (retning) => {
+                deltakerMaaned.setMonth(deltakerMaaned.getMonth() + retning);
+                byggKalender();
+            };
         }
 
         window.stemKalender = async (møteId, datoStr) => {
