@@ -1695,7 +1695,7 @@
                 const nesteÅr = mnd === 11 ? år + 1 : år;
                 const nesteMndKey = `${nesteÅr}-${String(nesteMndIdx+1).padStart(2,'0')}`;
                 const nesteHint = månederMedDays.includes(nesteMndKey) ?
-                    `<div style="text-align:center;font-size:12px;margin-top:8px;"><a href="#" onclick="endreParticipantMaaned(1);return false;" style="color:var(--primær);font-weight:600;text-decoration:none;">→ More options next month</a></div>` : '';
+                    `<div style="text-align:center;font-size:15px;margin-top:8px;"><a href="#" onclick="endreParticipantMaaned(1);return false;" style="color:#dc2626;font-weight:700;text-decoration:none;">→ More options next month</a></div>` : '';
 
                 const dagNavn = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
                 let html = `<div class="maaned-nav" style="margin-bottom:4px;">
