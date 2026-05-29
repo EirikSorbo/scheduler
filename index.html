@@ -551,7 +551,7 @@
         <div style="text-align:center;">
             <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--tekst);">Schedule</div>
             <div style="font-family:'Nunito',sans-serif;font-size:13px;color:var(--tekst-sek);margin-top:4px;">Sign in to organize meetings</div>
-            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v2.23</div>
+            <div style="font-family:'Nunito',sans-serif;font-size:11px;color:var(--primær-mid);margin-top:8px;">v2.24</div>
         </div>
         <button onclick="signIn()">
             <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z"/></svg>
@@ -561,7 +561,7 @@
 
     <!-- Header (kun synlig for admin) -->
     <header id="appHeader">
-        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v2.23</span></div>
+        <div class="logo">Schedule <span style="font-size:11px;font-weight:400;color:var(--tekst-sek);margin-left:4px;">v2.24</span></div>
 
         <div class="header-handlinger">
             <div style="display:flex;gap:10px;align-items:center;">
@@ -641,7 +641,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-        import { getFirestore, collection, doc, setDoc, getDoc, deleteDoc, onSnapshot, query, where }
+        import { getFirestore, collection, doc, setDoc, getDoc, deleteDoc, onSnapshot, query, where, runTransaction }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -664,6 +664,13 @@
         let redigeringsModus = false;
         let unsubscribeMøter = null; // for å rydde opp onSnapshot-lytter
         let thankYouShown = false;  // shown at most once per session
+
+        // XSS protection: escape user-supplied text for innerHTML
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
 
         // ── Sjekk URL umiddelbart ──
         const urlParams     = new URLSearchParams(window.location.search);
@@ -763,7 +770,7 @@
                 const aktiv = currentMøteId === id ? 'aktiv' : '';
                 const antall = Object.keys(m.stemmer || {}).length;
                 return `<div class="møte-item ${aktiv}" onclick="velgMøte('${id}')">
-                    <div class="møte-tittel">${m.tittel}</div>
+                    <div class="møte-tittel">${esc(m.tittel)}</div>
                     <div class="møte-meta">${m.tider.length} ${m.heldagshendelse ? 'dager' : 'tider'} · ${antall} participant(s)</div>
                 </div>`;
             }).join('');
@@ -884,7 +891,7 @@
                     tabell += '</tr></thead><tbody>';
                     deltakere.forEach(navn => {
                         const navnEsc = navn.replace(/'/g, "\\'");
-                        tabell += `<tr><td style="white-space:nowrap;"><div style="display:flex;align-items:center;gap:8px;"><button onclick="slettDeltaker('${møteId}','${navnEsc}')" title="Delete participant" style="background:none;border:none;cursor:pointer;color:#f87171;padding:0;line-height:1;flex-shrink:0;display:flex;align-items:center;" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#f87171'"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg></button><strong>${navn}</strong></div></td>`;
+                        tabell += `<tr><td style="white-space:nowrap;"><div style="display:flex;align-items:center;gap:8px;"><button onclick="slettDeltaker('${møteId}','${navnEsc}')" title="Delete participant" style="background:none;border:none;cursor:pointer;color:#f87171;padding:0;line-height:1;flex-shrink:0;display:flex;align-items:center;" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#f87171'"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg></button><strong>${esc(navn)}</strong></div></td>`;
                         møte.tider.forEach(tid => {
                             const v = stemmer[navn]?.[tid] || '–';
                             tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 8px;" class="${v==='ja'?'stemme-ja':''}">​${v==='ja'?'✓':'<span style="color:#f87171;">✗</span>'}</td>`;
@@ -909,7 +916,7 @@
                     tabell += '</tr></thead><tbody>';
                     deltakere.forEach(navn => {
                         const navnEsc = navn.replace(/'/g, "\\'");
-                        tabell += `<tr><td style="white-space:nowrap;"><div style="display:flex;align-items:center;gap:8px;"><button onclick="slettDeltaker('${møteId}','${navnEsc}')" title="Delete participant" style="background:none;border:none;cursor:pointer;color:#f87171;padding:0;line-height:1;flex-shrink:0;display:flex;align-items:center;" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#f87171'"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg></button><strong>${navn}</strong></div></td>`;
+                        tabell += `<tr><td style="white-space:nowrap;"><div style="display:flex;align-items:center;gap:8px;"><button onclick="slettDeltaker('${møteId}','${navnEsc}')" title="Delete participant" style="background:none;border:none;cursor:pointer;color:#f87171;padding:0;line-height:1;flex-shrink:0;display:flex;align-items:center;" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#f87171'"><svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'/><path d='M19 6l-1 14H6L5 6'/><path d='M10 11v6'/><path d='M14 11v6'/><path d='M9 6V4h6v2'/></svg></button><strong>${esc(navn)}</strong></div></td>`;
                         sortedTider.forEach(tid => {
                             const v = stemmer[navn]?.[tid] || null;
                             tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 8px;" class="${v==='ja'?'stemme-ja':''}">​${v==='ja'?'✓':'<span style="color:#f87171;">✗</span>'}</td>`;
@@ -1153,7 +1160,6 @@
                 const tidStr = `${String(time).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
                 const iso = `${dagStr}T${tidStr}`;
                 const erHelTime = min === 45;
-                const erHalvTime = min === 15;
                 const erStiplet = min === 0 || min === 30;
                 const visLabel = min === 0 || min === 30;
                 const slotKlasse = erHelTime ? 'hel-time' : erStiplet ? 'stiplet' : 'halvtime';
@@ -1187,7 +1193,6 @@
                 const [h, m] = tidDel.split(':').map(Number);
                 const minutterFraStart = (h * 60 + m) - startTime;
                 const slotIndex = minutterFraStart / slotMinutter;
-                const topPx = slotIndex * slotHøyde;
 
                 const blokk = document.createElement('div');
                 blokk.className = 'timeplan-blokk';
@@ -1555,7 +1560,7 @@
 
                 // One row per participant
                 Object.keys(stemmer).forEach(deltakerNavn => {
-                    tabell += `<tr><td><strong>${deltakerNavn}</strong></td>`;
+                    tabell += `<tr><td><strong>${esc(deltakerNavn)}</strong></td>`;
                     sortedTider.forEach(tid => {
                         const v = stemmer[deltakerNavn]?.[tid] || null;
                         tabell += `<td style="text-align:center;background:${tidFarge(tid)};padding:6px 8px;" class="${v==='ja'?'stemme-ja':''}">​${v==='ja'?'✓':'<span style="color:#f87171;">✗</span>'}</td>`;
@@ -1714,14 +1719,18 @@
                       || document.getElementById('deltakerNavnInput')?.value.trim();
             if (!navn) return;
             try {
-                const snap = await getDoc(doc(db, 'schedule_moter', møteId));
-                if (!snap.exists()) return;
-                const møte = snap.data();
-                if (!møte.stemmer) møte.stemmer = {};
-                if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
-                // Clear all time-slot votes for this user
-                møte.tider.forEach(t => delete møte.stemmer[navn][t]);
-                await setDoc(doc(db, 'schedule_moter', møteId), møte);
+                const ref = doc(db, 'schedule_moter', møteId);
+                const møte = await runTransaction(db, async (transaction) => {
+                    const snap = await transaction.get(ref);
+                    if (!snap.exists()) return null;
+                    const d = snap.data();
+                    if (!d.stemmer) d.stemmer = {};
+                    if (!d.stemmer[navn]) d.stemmer[navn] = {};
+                    d.tider.forEach(t => delete d.stemmer[navn][t]);
+                    transaction.set(ref, d);
+                    return d;
+                });
+                if (!møte) return;
                 renderParticipantTimes(møteId, møte);
             } catch(e) { alert('Error: ' + e.message); return; }
             const modal   = document.getElementById('thankYouModal');
@@ -1754,14 +1763,19 @@
                       || document.getElementById('deltakerNavnInput')?.value.trim();
             if (!navn) return;
             try {
-                const snap = await getDoc(doc(db, 'schedule_moter', møteId));
-                if (!snap.exists()) return;
-                const møte = snap.data();
-                if (!møte.stemmer) møte.stemmer = {};
-                if (møte.stemmer[navn]) {
-                    møte.tider.forEach(t => delete møte.stemmer[navn][t]);
-                }
-                await setDoc(doc(db, 'schedule_moter', møteId), møte);
+                const ref = doc(db, 'schedule_moter', møteId);
+                const møte = await runTransaction(db, async (transaction) => {
+                    const snap = await transaction.get(ref);
+                    if (!snap.exists()) return null;
+                    const d = snap.data();
+                    if (!d.stemmer) d.stemmer = {};
+                    if (d.stemmer[navn]) {
+                        d.tider.forEach(t => delete d.stemmer[navn][t]);
+                    }
+                    transaction.set(ref, d);
+                    return d;
+                });
+                if (!møte) return;
                 renderParticipantKalender(møteId, møte, navn, møte.stemmer);
             } catch(e) { alert('Error: ' + e.message); return; }
 
@@ -1777,13 +1791,16 @@
         window.slettDeltaker = async (møteId, navn) => {
             if (!confirm(`Delete "${navn}" and all their responses?`)) return;
             try {
-                const snap = await getDoc(doc(db, 'schedule_moter', møteId));
-                if (!snap.exists()) return;
-                const møte = snap.data();
-                if (møte.stemmer && møte.stemmer[navn] !== undefined) {
-                    delete møte.stemmer[navn];
-                    await setDoc(doc(db, 'schedule_moter', møteId), møte);
-                }
+                const ref = doc(db, 'schedule_moter', møteId);
+                await runTransaction(db, async (transaction) => {
+                    const snap = await transaction.get(ref);
+                    if (!snap.exists()) return;
+                    const møte = snap.data();
+                    if (møte.stemmer && møte.stemmer[navn] !== undefined) {
+                        delete møte.stemmer[navn];
+                        transaction.set(ref, møte);
+                    }
+                });
             } catch(e) { alert('Error: ' + e.message); }
         };
 
@@ -1819,14 +1836,28 @@
                 return;
             }
             try {
-                const snap = await getDoc(doc(db, 'schedule_moter', møteId));
-                if (!snap.exists()) return;
-                const møte = snap.data();
+                const ref = doc(db, 'schedule_moter', møteId);
+                const result = await runTransaction(db, async (transaction) => {
+                    const snap = await transaction.get(ref);
+                    if (!snap.exists()) return null;
+                    const møte = snap.data();
 
-                // Sjekk duplikat navn
-                const eksisterende = Object.keys(møte.stemmer || {});
-                const lagretNavn = localStorage.getItem('deltaker_navn_' + møteId);
-                if (eksisterende.includes(navn) && lagretNavn !== navn) {
+                    // Check duplicate name
+                    const eksisterende = Object.keys(møte.stemmer || {});
+                    const lagretNavn = localStorage.getItem('deltaker_navn_' + møteId);
+                    if (eksisterende.includes(navn) && lagretNavn !== navn) {
+                        return 'duplicate';
+                    }
+
+                    if (!møte.stemmer) møte.stemmer = {};
+                    if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
+                    const nå = møte.stemmer[navn][datoStr];
+                    if (!nå || nå === 'nei') møte.stemmer[navn][datoStr] = 'ja';
+                    else delete møte.stemmer[navn][datoStr];
+                    transaction.set(ref, møte);
+                    return møte;
+                });
+                if (result === 'duplicate') {
                     const inp = document.getElementById('deltakerNavnInput');
                     if (inp) {
                         inp.value = '';
@@ -1836,16 +1867,9 @@
                     }
                     return;
                 }
-
+                if (!result) return;
                 localStorage.setItem('deltaker_navn_' + møteId, navn);
-                if (!møte.stemmer) møte.stemmer = {};
-                if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
-                // Heldagshendelse: toggle ja/fjern (ingen nei)
-                const nå = møte.stemmer[navn][datoStr];
-                if (!nå || nå === 'nei') møte.stemmer[navn][datoStr] = 'ja';
-                else delete møte.stemmer[navn][datoStr];
-                await setDoc(doc(db, 'schedule_moter', møteId), møte);
-                renderParticipantKalender(møteId, møte, navn, møte.stemmer || {});
+                renderParticipantKalender(møteId, result, navn, result.stemmer || {});
             } catch(e) { alert('Error: ' + e.message); }
         };
 
@@ -1858,17 +1882,38 @@
                 return;
             }
             try {
-                const snap = await getDoc(doc(db, 'schedule_moter', møteId));
-                if (!snap.exists()) return;
-                const møte = snap.data();
-                if (!møte.stemmer) møte.stemmer = {};
-                if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
-                const current = møte.stemmer[navn][tid] || null;
-                if (current === 'ja') delete møte.stemmer[navn][tid];
-                else                  møte.stemmer[navn][tid] = 'ja';
+                const ref = doc(db, 'schedule_moter', møteId);
+                const result = await runTransaction(db, async (transaction) => {
+                    const snap = await transaction.get(ref);
+                    if (!snap.exists()) return null;
+                    const møte = snap.data();
+                    if (!møte.stemmer) møte.stemmer = {};
+
+                    // Check duplicate name
+                    const eksisterende = Object.keys(møte.stemmer);
+                    const lagretNavn2 = localStorage.getItem('deltaker_navn_' + møteId);
+                    if (eksisterende.includes(navn) && lagretNavn2 !== navn) return 'duplicate';
+
+                    if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
+                    const current = møte.stemmer[navn][tid] || null;
+                    if (current === 'ja') delete møte.stemmer[navn][tid];
+                    else                  møte.stemmer[navn][tid] = 'ja';
+                    transaction.set(ref, møte);
+                    return møte;
+                });
+                if (result === 'duplicate') {
+                    const inp = document.getElementById('deltakerNavnInput');
+                    if (inp) {
+                        inp.value = '';
+                        inp.placeholder = '⚠ This name is taken — please choose another';
+                        inp.style.borderColor = '#f87171';
+                        setTimeout(() => { inp.style.borderColor = ''; inp.placeholder = 'Enter your name here...'; }, 4000);
+                    }
+                    return;
+                }
+                if (!result) return;
                 localStorage.setItem('deltaker_navn_' + møteId, navn);
-                await setDoc(doc(db, 'schedule_moter', møteId), møte);
-                renderParticipantTimes(møteId, møte);
+                renderParticipantTimes(møteId, result);
             } catch(e) { console.error(e); }
         };
 
