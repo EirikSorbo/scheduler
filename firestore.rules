@@ -1,18 +1,29 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Arrangørens e-post — kun denne kontoen kan opprette/endre/slette møter.
+    function erArrangor() {
+      return request.auth != null
+        && request.auth.token.email == 'eirik.sorbo@gmail.com';
+    }
+
     match /schedule_moter/{docId} {
-      // Alle kan lese et møte via lenken (deltakere er ikke innlogget).
+      // Alle kan lese et møte via lenken (deltakere er ikke innlogget med Google).
       allow read: if true;
 
-      // Kun arrangøren (innlogget) kan opprette eller slette møter.
-      allow create, delete: if request.auth != null;
+      // Kun arrangøren kan opprette, endre eller slette selve møtet
+      // (tittel, tider, varighet osv.). Deltakere rører aldri møtedokumentet.
+      allow create, update, delete: if erArrangor();
 
-      // Innlogget arrangør kan endre alt.
-      // Deltakere (ikke innlogget) kan KUN endre 'stemmer'-feltet —
-      // tittel, tider, varighet, uid m.m. er dermed beskyttet mot tukling.
-      allow update: if request.auth != null
-        || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stemmer']);
+      // Stemmer: ett dokument per deltaker, keyet på deres (anonyme) uid.
+      match /stemmer/{uid} {
+        allow read: if true;
+        // Hver deltaker kan KUN skrive sitt eget dokument (uid == auth.uid).
+        // Arrangøren kan slette/redigere hvem som helst (f.eks. fjerne en deltaker).
+        allow write: if erArrangor()
+          || (request.auth != null && request.auth.uid == uid);
+      }
     }
   }
 }

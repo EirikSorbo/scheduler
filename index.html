@@ -632,9 +632,9 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-        import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut, onAuthStateChanged }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-        import { getFirestore, collection, doc, setDoc, getDoc, deleteDoc, onSnapshot, query, where, runTransaction }
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, where, runTransaction }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -651,7 +651,7 @@
         const db   = getFirestore(app);
 
         // ── Versjon (én kilde — skrives inn i begge badges) ──
-        const APP_VERSION = 'v2.25';
+        const APP_VERSION = 'v2.26';
         document.querySelectorAll('.app-version').forEach(el => el.textContent = APP_VERSION);
 
         // ── State ──
@@ -661,6 +661,63 @@
         let redigeringsModus = false;
         let unsubscribeMøter = null; // for å rydde opp onSnapshot-lytter
         let thankYouShown = false;  // shown at most once per session
+
+        // ── Stemmer bor nå i subkolleksjonen schedule_moter/{id}/stemmer/{uid} ──
+        let participantUid = null;      // anonym auth-uid (stabil deltakeridentitet)
+        let participantMøte = null;     // sist innlastede møte i deltakermodus
+        let stemmerDocs = {};           // møteId -> [{ uid, navn, svar:{tid:'ja'} }]
+        let stemmerUnsub = {};          // møteId -> onSnapshot-unsub (admin live-lyttere)
+
+        // Bygg navn-nøklet map som resten av render-koden forventer ({navn: {tid:'ja'}})
+        function stemmerFor(møteId) {
+            const map = {};
+            (stemmerDocs[møteId] || []).forEach(d => { map[d.navn] = d.svar || {}; });
+            return map;
+        }
+        function uidForNavn(møteId, navn) {
+            const d = (stemmerDocs[møteId] || []).find(x => x.navn === navn);
+            return d ? d.uid : null;
+        }
+        function navnErTattAv(møteId, navn, egenUid) {
+            return (stemmerDocs[møteId] || []).some(d => d.navn === navn && d.uid !== egenUid);
+        }
+        async function hentStemmer(møteId) {
+            const snap = await getDocs(collection(db, 'schedule_moter', møteId, 'stemmer'));
+            stemmerDocs[møteId] = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+            return stemmerDocs[møteId];
+        }
+        function ensureStemmerListener(møteId) {
+            if (stemmerUnsub[møteId]) return;
+            stemmerUnsub[møteId] = onSnapshot(
+                collection(db, 'schedule_moter', møteId, 'stemmer'),
+                snap => {
+                    stemmerDocs[møteId] = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+                    renderMøteListe();
+                    if (currentMøteId === møteId && !redigeringsModus) renderMøteDetaljer(møteId);
+                },
+                err => console.error('stemmer-lytter feilet', err)
+            );
+        }
+
+        // Engangs-migrering: flytt gamle stemmer fra møtedokumentet til subkolleksjonen.
+        // Kjør ÉN gang i nettleserkonsollen som innlogget arrangør:  migrerStemmer()
+        window.migrerStemmer = async () => {
+            let flyttet = 0;
+            for (const id of Object.keys(møter)) {
+                if (id.startsWith('ny_')) continue;
+                const m = møter[id];
+                if (!m.stemmer || !Object.keys(m.stemmer).length) continue;
+                for (const [navn, svar] of Object.entries(m.stemmer)) {
+                    const uid = 'legacy_' + btoa(unescape(encodeURIComponent(navn))).replace(/[^A-Za-z0-9]/g, '');
+                    await setDoc(doc(db, 'schedule_moter', id, 'stemmer', uid), { navn, svar: svar || {} });
+                    flyttet++;
+                }
+                const kopi = { ...m }; delete kopi.stemmer;
+                await setDoc(doc(db, 'schedule_moter', id), kopi);
+                console.log('Migrerte møte:', m.tittel || id);
+            }
+            console.log(`Migrering ferdig — ${flyttet} deltaker(e) flyttet.`);
+        };
 
         // XSS protection: escape user-supplied text for innerHTML
         function esc(s) {
@@ -675,10 +732,10 @@
         const erParticipant    = !!møteIdFraUrl;
 
         if (erParticipant) {
-            // Participant-modus: skjul loginoverlay, vis deltaker-panel
+            // Participant-modus: skjul loginoverlay, vis deltaker-panel.
+            // Selve innlastingen skjer i onAuthStateChanged når vi har en (anonym) uid.
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('deltakerPanel').classList.add('aktiv');
-            lastParticipantPanel(møteIdFraUrl);
         }
 
         // ── Auth ──
@@ -699,7 +756,23 @@
         window.logout = async () => { await signOut(auth); };
 
         onAuthStateChanged(auth, async bruker => {
-            if (erParticipant) return; // ikke forstyrr deltaker-modus
+            if (erParticipant) {
+                // Deltaker trenger en uid for å kunne stemme (én stemmedok per uid).
+                if (bruker) {
+                    const førsteGang = !participantUid;
+                    participantUid = bruker.uid;
+                    if (førsteGang) lastParticipantPanel(møteIdFraUrl); // ikke last på nytt ved token-refresh
+                } else {
+                    try {
+                        await signInAnonymously(auth); // re-trigger onAuthStateChanged med en bruker
+                    } catch(e) {
+                        console.error('Anonym innlogging feilet', e);
+                        // Last panelet likevel (lesing funker); stemming vil be om reload / at anonym auth slås på
+                        lastParticipantPanel(møteIdFraUrl);
+                    }
+                }
+                return;
+            }
 
             if (bruker && bruker.email === ADMIN_EPOST) {
                 currentUser = bruker;
@@ -725,6 +798,13 @@
                             delete møter[id];
                         }
                     });
+                    // Live-lytt på hver stemmer-subkolleksjon; riv ned for slettede møter
+                    firebaseIds.forEach(id => ensureStemmerListener(id));
+                    Object.keys(stemmerUnsub).forEach(id => {
+                        if (!firebaseIds.includes(id)) {
+                            stemmerUnsub[id](); delete stemmerUnsub[id]; delete stemmerDocs[id];
+                        }
+                    });
                     renderMøteListe();
                     // Oppdater åpent møte live hvis det er i visning (ikke redigering)
                     if (currentMøteId && !currentMøteId.startsWith('ny_') && !redigeringsModus) {
@@ -744,6 +824,8 @@
             } else {
                 currentUser = null;
                 if (unsubscribeMøter) { unsubscribeMøter(); unsubscribeMøter = null; }
+                Object.values(stemmerUnsub).forEach(u => u());
+                stemmerUnsub = {}; stemmerDocs = {};
                 document.getElementById('loginOverlay').style.display = 'flex';
                 document.getElementById('appHeader').style.display = 'none';
                 document.getElementById('adminPanel').classList.remove('aktiv');
@@ -767,7 +849,7 @@
             liste.innerHTML = ids.map(id => {
                 const m = møter[id];
                 const aktiv = currentMøteId === id ? 'aktiv' : '';
-                const antall = Object.keys(m.stemmer || {}).length;
+                const antall = (stemmerDocs[id] || []).length;
                 return `<div class="møte-item ${aktiv}" onclick="velgMøte('${id}')">
                     <div class="møte-tittel">${esc(m.tittel)}</div>
                     <div class="møte-meta">${m.tider.length} ${m.heldagshendelse ? 'dager' : 'tider'} · ${antall} participant(s)</div>
@@ -807,7 +889,7 @@
         window.opprettNyttMøte = () => {
             currentMøteId = 'ny_' + Date.now();
             redigeringsModus = true;
-            møter[currentMøteId] = { tittel: '', beskrivelse: '', varighet: 60, tider: [''], stemmer: {} };
+            møter[currentMøteId] = { tittel: '', beskrivelse: '', varighet: 60, tider: [''] };
             renderMøteListe();
             visSkjema(currentMøteId);
             if (erMobil()) visMobilDetalj();
@@ -823,7 +905,7 @@
 
             const link = window.location.origin + window.location.pathname + '?møte=' + møteId;
 
-            const stemmer = møte.stemmer || {};
+            const stemmer = stemmerFor(møteId);
             const deltakere = Object.keys(stemmer);
             const antallParticipante = deltakere.length;
             const visResponses = deltakere.length > 0;
@@ -1250,23 +1332,16 @@
             const erNy  = currentMøteId.startsWith('ny_');
             const nyId  = erNy ? Date.now().toString() : currentMøteId;
             møte.uid    = currentUser.uid;
-            if (!møte.stemmer) møte.stemmer = {};
+            // Stemmer bor i subkolleksjonen, aldri i møtedokumentet
+            delete møte.stemmer;
 
             try {
+                await setDoc(doc(db, 'schedule_moter', nyId), møte);
                 if (erNy) {
-                    await setDoc(doc(db, 'schedule_moter', nyId), møte);
                     delete møter[currentMøteId];
                     møter[nyId] = møte;
                     currentMøteId = nyId;
-                } else {
-                    // Bevar stemmer som kan ha kommet inn mens vi redigerte
-                    const ref = doc(db, 'schedule_moter', nyId);
-                    await runTransaction(db, async (tx) => {
-                        const snap = await tx.get(ref);
-                        møte.stemmer = (snap.exists() && snap.data().stemmer) || møte.stemmer || {};
-                        tx.set(ref, møte);
-                    });
-                    møter[nyId] = møte;
+                    ensureStemmerListener(nyId);
                 }
                 redigeringsModus = false;
                 renderMøteListe();
@@ -1331,13 +1406,20 @@
                     return;
                 }
                 const møte = snap.data();
+                participantMøte = møte;
                 document.getElementById('deltakerMøteTitle').textContent = møte.tittel || '';
                 document.getElementById('deltakerMøteBeskrivelse').textContent = møte.beskrivelse || '';
 
-                // Gjenkjenn returnerende deltaker på egen enhet, så de kan endre svarene sine
-                const lagretNavn = localStorage.getItem('deltaker_navn_' + møteId);
-                document.getElementById('deltakerNavnInput').value = lagretNavn || '';
+                await hentStemmer(møteId);
+                // Gjenkjenn deltakeren via egen (anonym) uid — stabil på tvers av besøk,
+                // så de kan komme tilbake og endre svarene sine.
+                const egen = (stemmerDocs[møteId] || []).find(d => d.uid === participantUid);
+                const navn = egen ? egen.navn : (localStorage.getItem('deltaker_navn_' + møteId) || '');
+                if (navn) localStorage.setItem('deltaker_navn_' + møteId, navn);
+                else localStorage.removeItem('deltaker_navn_' + møteId);
+                document.getElementById('deltakerNavnInput').value = navn || '';
 
+                møte.stemmer = stemmerFor(møteId);
                 renderParticipantTimes(møteId, møte);
             } catch(e) {
                 document.getElementById('deltakerMøteTitle').textContent = 'Failed to load';
@@ -1350,31 +1432,27 @@
         window.oppdaterNavn = (immediate) => {
             clearTimeout(navnDebounce);
             navnDebounce = setTimeout(() => {
-                const navn = document.getElementById('deltakerNavnInput').value.trim();
                 const inp  = document.getElementById('deltakerNavnInput');
+                const navn = inp.value.trim();
                 if (navn) {
-                    // Sjekk om navn er tatt (uten å låse — bare vis advarsel)
-                    getDoc(doc(db, 'schedule_moter', møteIdFraUrl)).then(snap => {
-                        if (!snap.exists()) return;
-                        const møte = snap.data();
-                        const eksisterende = Object.keys(møte.stemmer || {});
-                        const lagret = localStorage.getItem('deltaker_navn_' + møteIdFraUrl);
-                        if (eksisterende.includes(navn) && lagret !== navn) {
-                            inp.style.borderColor = '#f87171';
-                            inp.title = 'This name is already taken — please choose another';
-                        } else {
-                            inp.style.borderColor = '';
-                            inp.title = '';
-                            localStorage.setItem('deltaker_navn_' + møteIdFraUrl, navn);
-                            renderParticipantTimes(møteIdFraUrl, møte);
-                        }
-                    });
+                    // Navn er identiteten kun for visning; egen uid eier stemmedokumentet.
+                    // Bruk et navn en ANNEN deltaker allerede har? Bare advar, ikke lås.
+                    if (navnErTattAv(møteIdFraUrl, navn, participantUid)) {
+                        inp.style.borderColor = '#f87171';
+                        inp.title = 'This name is already taken — please choose another';
+                        return;
+                    }
+                    inp.style.borderColor = '';
+                    inp.title = '';
+                    localStorage.setItem('deltaker_navn_' + møteIdFraUrl, navn);
                 } else {
                     inp.style.borderColor = '';
+                    inp.title = '';
                     localStorage.removeItem('deltaker_navn_' + møteIdFraUrl);
-                    getDoc(doc(db, 'schedule_moter', møteIdFraUrl)).then(snap => {
-                        if (snap.exists()) renderParticipantTimes(møteIdFraUrl, snap.data());
-                    });
+                }
+                if (participantMøte) {
+                    participantMøte.stemmer = stemmerFor(møteIdFraUrl);
+                    renderParticipantTimes(møteIdFraUrl, participantMøte);
                 }
             }, immediate ? 0 : 400);
         };
@@ -1722,25 +1800,50 @@
             byggKalender();
         }
 
-        window.ingenAvTider = async (møteId) => {
-            const navn = localStorage.getItem('deltaker_navn_' + møteId)
-                      || document.getElementById('deltakerNavnInput')?.value.trim();
-            if (!navn) return;
+        // ── Deltaker: skriv KUN eget stemmedokument (schedule_moter/{id}/stemmer/{uid}) ──
+        function gjeldendeNavn(møteId) {
+            return (localStorage.getItem('deltaker_navn_' + møteId)
+                || document.getElementById('deltakerNavnInput')?.value.trim() || '').trim();
+        }
+        function visNavnTatt() {
+            const inp = document.getElementById('deltakerNavnInput');
+            if (!inp) return;
+            inp.style.borderColor = '#f87171';
+            inp.title = 'This name is already taken — please choose another';
+            setTimeout(() => { inp.style.borderColor = ''; inp.title = ''; }, 4000);
+        }
+        // mutate(svar) endrer deltakerens eget svar-map ({tid:'ja'}) in-place
+        async function skrivEgenStemme(møteId, mutate) {
+            const navn = gjeldendeNavn(møteId);
+            if (!navn) { visNavnPåkrevd(); return false; }
+            if (!participantUid) { alert('Sign-in not ready — please reload the page.'); return false; }
+            await hentStemmer(møteId); // fersk sjekk mot andre deltakere før skriving
+            if (navnErTattAv(møteId, navn, participantUid)) { visNavnTatt(); return false; }
             try {
-                const ref = doc(db, 'schedule_moter', møteId);
-                const møte = await runTransaction(db, async (transaction) => {
-                    const snap = await transaction.get(ref);
-                    if (!snap.exists()) return null;
-                    const d = snap.data();
-                    if (!d.stemmer) d.stemmer = {};
-                    if (!d.stemmer[navn]) d.stemmer[navn] = {};
-                    d.tider.forEach(t => delete d.stemmer[navn][t]);
-                    transaction.set(ref, d);
-                    return d;
+                const ref = doc(db, 'schedule_moter', møteId, 'stemmer', participantUid);
+                await runTransaction(db, async (tx) => {
+                    const s = await tx.get(ref);
+                    const data = s.exists() ? s.data() : { navn, svar: {} };
+                    data.navn = navn;
+                    if (!data.svar) data.svar = {};
+                    mutate(data.svar);
+                    tx.set(ref, data);
                 });
-                if (!møte) return;
-                renderParticipantTimes(møteId, møte);
-            } catch(e) { alert('Error: ' + e.message); return; }
+                localStorage.setItem('deltaker_navn_' + møteId, navn);
+                await hentStemmer(møteId);
+                if (participantMøte) {
+                    participantMøte.stemmer = stemmerFor(møteId);
+                    renderParticipantTimes(møteId, participantMøte);
+                }
+                return true;
+            } catch(e) { alert('Error: ' + e.message); return false; }
+        }
+
+        window.ingenAvTider = async (møteId) => {
+            const ok = await skrivEgenStemme(møteId, svar => {
+                Object.keys(svar).forEach(k => delete svar[k]); // tøm alle egne svar
+            });
+            if (!ok) return;
             const modal   = document.getElementById('thankYouModal');
             const titleEl = document.getElementById('thankYouModalTitle');
             const bodyEl  = document.getElementById('thankYouModalBody');
@@ -1767,26 +1870,10 @@
         };
 
         window.ingenAvDisse = async (møteId) => {
-            const navn = localStorage.getItem('deltaker_navn_' + møteId)
-                      || document.getElementById('deltakerNavnInput')?.value.trim();
-            if (!navn) return;
-            try {
-                const ref = doc(db, 'schedule_moter', møteId);
-                const møte = await runTransaction(db, async (transaction) => {
-                    const snap = await transaction.get(ref);
-                    if (!snap.exists()) return null;
-                    const d = snap.data();
-                    if (!d.stemmer) d.stemmer = {};
-                    if (d.stemmer[navn]) {
-                        d.tider.forEach(t => delete d.stemmer[navn][t]);
-                    }
-                    transaction.set(ref, d);
-                    return d;
-                });
-                if (!møte) return;
-                renderParticipantKalender(møteId, møte, navn, møte.stemmer);
-            } catch(e) { alert('Error: ' + e.message); return; }
-
+            const ok = await skrivEgenStemme(møteId, svar => {
+                Object.keys(svar).forEach(k => delete svar[k]); // tøm alle egne svar
+            });
+            if (!ok) return;
             const modal   = document.getElementById('thankYouModal');
             const titleEl = document.getElementById('thankYouModalTitle');
             const bodyEl  = document.getElementById('thankYouModalBody');
@@ -1799,17 +1886,10 @@
         window.slettDeltaker = async (møteId, navn) => {
             navn = decodeURIComponent(navn);
             if (!confirm(`Delete "${navn}" and all their responses?`)) return;
+            const uid = uidForNavn(møteId, navn);
+            if (!uid) return;
             try {
-                const ref = doc(db, 'schedule_moter', møteId);
-                await runTransaction(db, async (transaction) => {
-                    const snap = await transaction.get(ref);
-                    if (!snap.exists()) return;
-                    const møte = snap.data();
-                    if (møte.stemmer && møte.stemmer[navn] !== undefined) {
-                        delete møte.stemmer[navn];
-                        transaction.set(ref, møte);
-                    }
-                });
+                await deleteDoc(doc(db, 'schedule_moter', møteId, 'stemmer', uid));
             } catch(e) { alert('Error: ' + e.message); }
         };
 
@@ -1836,94 +1916,18 @@
         }
 
         window.stemKalender = async (møteId, datoStr) => {
-            const lagretNavn = localStorage.getItem('deltaker_navn_' + møteId);
-            const inputNavn  = document.getElementById('deltakerNavnInput')?.value.trim();
-            const navn = lagretNavn || inputNavn;
-
-            if (!navn) {
-                visNavnPåkrevd();
-                return;
-            }
-            try {
-                const ref = doc(db, 'schedule_moter', møteId);
-                const result = await runTransaction(db, async (transaction) => {
-                    const snap = await transaction.get(ref);
-                    if (!snap.exists()) return null;
-                    const møte = snap.data();
-
-                    // Check duplicate name
-                    const eksisterende = Object.keys(møte.stemmer || {});
-                    const lagretNavn = localStorage.getItem('deltaker_navn_' + møteId);
-                    if (eksisterende.includes(navn) && lagretNavn !== navn) {
-                        return 'duplicate';
-                    }
-
-                    if (!møte.stemmer) møte.stemmer = {};
-                    if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
-                    const nå = møte.stemmer[navn][datoStr];
-                    if (!nå || nå === 'nei') møte.stemmer[navn][datoStr] = 'ja';
-                    else delete møte.stemmer[navn][datoStr];
-                    transaction.set(ref, møte);
-                    return møte;
-                });
-                if (result === 'duplicate') {
-                    const inp = document.getElementById('deltakerNavnInput');
-                    if (inp) {
-                        inp.value = '';
-                        inp.placeholder = '⚠ This name is taken — please choose another';
-                        inp.style.borderColor = '#f87171';
-                        setTimeout(() => { inp.style.borderColor = ''; inp.placeholder = 'Enter your name here...'; }, 4000);
-                    }
-                    return;
-                }
-                if (!result) return;
-                localStorage.setItem('deltaker_navn_' + møteId, navn);
-                renderParticipantKalender(møteId, result, navn, result.stemmer || {});
-            } catch(e) { alert('Error: ' + e.message); }
+            await skrivEgenStemme(møteId, svar => {
+                if (svar[datoStr] === 'ja') delete svar[datoStr];
+                else svar[datoStr] = 'ja';
+            });
         };
 
-        // Cycle through: null → 'ja' (for week-grid tap)
+        // Toggle en enkelt slot i uke-rutenettet
         window.stemCycle = async (møteId, tid) => {
-            const navn = localStorage.getItem('deltaker_navn_' + møteId)
-                      || document.getElementById('deltakerNavnInput')?.value.trim();
-            if (!navn) {
-                visNavnPåkrevd();
-                return;
-            }
-            try {
-                const ref = doc(db, 'schedule_moter', møteId);
-                const result = await runTransaction(db, async (transaction) => {
-                    const snap = await transaction.get(ref);
-                    if (!snap.exists()) return null;
-                    const møte = snap.data();
-                    if (!møte.stemmer) møte.stemmer = {};
-
-                    // Check duplicate name
-                    const eksisterende = Object.keys(møte.stemmer);
-                    const lagretNavn2 = localStorage.getItem('deltaker_navn_' + møteId);
-                    if (eksisterende.includes(navn) && lagretNavn2 !== navn) return 'duplicate';
-
-                    if (!møte.stemmer[navn]) møte.stemmer[navn] = {};
-                    const current = møte.stemmer[navn][tid] || null;
-                    if (current === 'ja') delete møte.stemmer[navn][tid];
-                    else                  møte.stemmer[navn][tid] = 'ja';
-                    transaction.set(ref, møte);
-                    return møte;
-                });
-                if (result === 'duplicate') {
-                    const inp = document.getElementById('deltakerNavnInput');
-                    if (inp) {
-                        inp.value = '';
-                        inp.placeholder = '⚠ This name is taken — please choose another';
-                        inp.style.borderColor = '#f87171';
-                        setTimeout(() => { inp.style.borderColor = ''; inp.placeholder = 'Enter your name here...'; }, 4000);
-                    }
-                    return;
-                }
-                if (!result) return;
-                localStorage.setItem('deltaker_navn_' + møteId, navn);
-                renderParticipantTimes(møteId, result);
-            } catch(e) { console.error(e); }
+            await skrivEgenStemme(møteId, svar => {
+                if (svar[tid] === 'ja') delete svar[tid];
+                else svar[tid] = 'ja';
+            });
         };
 
     </script>
