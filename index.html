@@ -521,6 +521,7 @@
             #detaljSection.vis-mobil { display: block !important; }
             #møteKort { display: block; }
             #møteKort.skjult-mobil { display: none; }
+            #papirkurvToggleRad.skjult-mobil, #papirkurvKort.skjult-mobil { display: none !important; }
 
             /* ── Timeplan: større touchmål ── */
             .timeplan-slot { height: 32px; }
@@ -579,6 +580,17 @@
                     <div class="møte-liste" id="møteListe"></div>
                 </div>
 
+                <div id="papirkurvToggleRad" style="display:none;">
+                    <button id="papirkurvToggle" onclick="togglePapirkurv()" style="background:none;border:none;color:var(--tekst-sek);font-family:'Syne',sans-serif;font-weight:700;font-size:12px;cursor:pointer;padding:4px 0;display:inline-flex;align-items:center;gap:6px;">🗑 Trash (<span id="papirkurvAntall">0</span>)</button>
+                </div>
+                <div class="kort" id="papirkurvKort" style="display:none;">
+                    <div class="kort-header" style="display:flex;align-items:center;justify-content:space-between;">
+                        <div class="kort-tittel">Trash · auto-deletes after 30 days</div>
+                        <button onclick="togglePapirkurv()" class="header-knapp" style="width:28px;height:28px;font-size:13px;" title="Close">✕</button>
+                    </div>
+                    <div class="møte-liste" id="papirkurvListe"></div>
+                </div>
+
                 <div id="detaljSection">
                     <div class="kort">
                         <div class="kort-header">
@@ -634,7 +646,7 @@
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
         import { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut, onAuthStateChanged }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, onSnapshot, query, where, runTransaction }
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, deleteDoc, updateDoc, deleteField, onSnapshot, query, where, runTransaction }
             from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
         const firebaseConfig = {
@@ -651,8 +663,13 @@
         const db   = getFirestore(app);
 
         // ── Versjon (én kilde — skrives inn i begge badges) ──
-        const APP_VERSION = 'v2.26';
+        const APP_VERSION = 'v2.27';
         document.querySelectorAll('.app-version').forEach(el => el.textContent = APP_VERSION);
+
+        // ── Papirkurv: myk sletting, permanent etter 30 dager ──
+        const PAPIRKURV_DAGER = 30;
+        let visPapirkurv = false;
+        let purgeKjørt = false;
 
         // ── State ──
         let currentUser  = null;
@@ -806,12 +823,14 @@
                         }
                     });
                     renderMøteListe();
+                    // Tøm papirkurven for alt eldre enn 30 dager (én gang per økt)
+                    if (!purgeKjørt) { purgeKjørt = true; autoPurgePapirkurv(); }
                     // Oppdater åpent møte live hvis det er i visning (ikke redigering)
                     if (currentMøteId && !currentMøteId.startsWith('ny_') && !redigeringsModus) {
                         renderMøteDetaljer(currentMøteId);
                     } else if (!currentMøteId) {
-                        // Vis nyeste møte som default
-                        const ids = Object.keys(møter).filter(id => !id.startsWith('ny_'));
+                        // Vis nyeste (ikke-slettede) møte som default
+                        const ids = Object.keys(møter).filter(id => !id.startsWith('ny_') && !møter[id].slettetTid);
                         if (ids.length > 0) {
                             const nyesteId = ids.sort((a, b) => Number(b) - Number(a))[0];
                             currentMøteId = nyesteId;
@@ -835,8 +854,9 @@
 
         // ── Admin: Møteliste ──
         function renderMøteListe() {
+            renderPapirkurv();
             const liste = document.getElementById('møteListe');
-            const ids = Object.keys(møter).filter(id => !id.startsWith('ny_'));
+            const ids = Object.keys(møter).filter(id => !id.startsWith('ny_') && !møter[id].slettetTid);
 
             if (ids.length === 0) {
                 liste.innerHTML = '<div class="tom-melding">No meetings yet</div>';
@@ -857,6 +877,71 @@
             }).join('');
         }
 
+        // ── Admin: Papirkurv ──
+        function renderPapirkurv() {
+            const trashed = Object.entries(møter)
+                .filter(([id, m]) => !id.startsWith('ny_') && m.slettetTid)
+                .sort((a, b) => b[1].slettetTid - a[1].slettetTid);
+
+            const toggleRad = document.getElementById('papirkurvToggleRad');
+            const kort      = document.getElementById('papirkurvKort');
+            const antallEl  = document.getElementById('papirkurvAntall');
+            if (antallEl) antallEl.textContent = trashed.length;
+
+            if (!trashed.length) {
+                visPapirkurv = false;
+                if (toggleRad) toggleRad.style.display = 'none';
+                if (kort) kort.style.display = 'none';
+                return;
+            }
+            if (toggleRad) toggleRad.style.display = '';
+            if (kort) kort.style.display = visPapirkurv ? '' : 'none';
+            if (!visPapirkurv) return;
+
+            const liste = document.getElementById('papirkurvListe');
+            if (!liste) return;
+            liste.innerHTML = trashed.map(([id, m]) => {
+                const dagerSiden = Math.floor((Date.now() - m.slettetTid) / 86400000);
+                const dagerIgjen = Math.max(0, PAPIRKURV_DAGER - dagerSiden);
+                const slettetTekst = dagerSiden <= 0 ? 'today' : dagerSiden + ' day(s) ago';
+                return `<div class="møte-item" style="cursor:default;flex-direction:column;align-items:stretch;gap:8px;min-width:220px;">
+                    <div>
+                        <div class="møte-tittel">${esc(m.tittel || '(untitled)')}</div>
+                        <div class="møte-meta">Deleted ${slettetTekst} · ${dagerIgjen} day(s) left</div>
+                    </div>
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn-sekundær" style="flex:1;padding:6px 10px;font-size:12px;" onclick="gjenopprettMøte('${id}')">Restore</button>
+                        <button class="btn-fare" style="flex:1;padding:6px 10px;font-size:12px;" onclick="slettMøtePermanent('${id}')">Delete now</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        window.togglePapirkurv = () => {
+            visPapirkurv = !visPapirkurv;
+            renderPapirkurv();
+        };
+
+        // Slett stemmer-subkolleksjonen først (Firestore sletter den ikke automatisk), så møtet
+        async function slettMøteHelt(id) {
+            const s = await getDocs(collection(db, 'schedule_moter', id, 'stemmer'));
+            await Promise.all(s.docs.map(d => deleteDoc(doc(db, 'schedule_moter', id, 'stemmer', d.id))));
+            await deleteDoc(doc(db, 'schedule_moter', id));
+        }
+
+        async function autoPurgePapirkurv() {
+            const grense = Date.now() - PAPIRKURV_DAGER * 86400000;
+            for (const [id, m] of Object.entries(møter)) {
+                if (id.startsWith('ny_') || !m.slettetTid || m.slettetTid >= grense) continue;
+                try {
+                    await slettMøteHelt(id);
+                    delete møter[id];
+                    console.log('Auto-slettet fra papirkurv:', m.tittel || id);
+                } catch(e) { console.error('Auto-purge feilet for', id, e); }
+            }
+            renderMøteListe();
+        }
+
         const erMobil = () => window.innerWidth <= 600;
 
         window.velgMøte = id => {
@@ -869,11 +954,15 @@
 
         function visMobilDetalj() {
             document.getElementById('møteKort').classList.add('skjult-mobil');
+            document.getElementById('papirkurvToggleRad')?.classList.add('skjult-mobil');
+            document.getElementById('papirkurvKort')?.classList.add('skjult-mobil');
             document.getElementById('detaljSection').classList.add('vis-mobil');
         }
 
         function visMobilListe() {
             document.getElementById('møteKort').classList.remove('skjult-mobil');
+            document.getElementById('papirkurvToggleRad')?.classList.remove('skjult-mobil');
+            document.getElementById('papirkurvKort')?.classList.remove('skjult-mobil');
             document.getElementById('detaljSection').classList.remove('vis-mobil');
         }
 
@@ -1362,17 +1451,35 @@
             renderMøteListe();
         };
 
+        // Myk sletting: flytt til papirkurv (permanent slettes automatisk etter 30 dager)
         window.slettMøte = async id => {
-            if (!confirm('Delete this meeting?')) return;
+            if (!confirm('Move this meeting to Trash? It will be permanently deleted after 30 days.')) return;
             try {
-                await deleteDoc(doc(db, 'schedule_moter', id));
-                delete møter[id];
+                await updateDoc(doc(db, 'schedule_moter', id), { slettetTid: Date.now() });
+                if (møter[id]) møter[id].slettetTid = Date.now();
                 currentMøteId = null;
                 redigeringsModus = false;
                 renderMøteListe();
                 document.getElementById('detaljSection').classList.remove('vis');
                 if (erMobil()) visMobilListe();
             } catch(e) { alert('Error deleting: ' + e.message); }
+        };
+
+        window.gjenopprettMøte = async id => {
+            try {
+                await updateDoc(doc(db, 'schedule_moter', id), { slettetTid: deleteField() });
+                if (møter[id]) delete møter[id].slettetTid;
+                renderMøteListe();
+            } catch(e) { alert('Error restoring: ' + e.message); }
+        };
+
+        window.slettMøtePermanent = async id => {
+            if (!confirm('Permanently delete this meeting and all responses? This cannot be undone.')) return;
+            try {
+                await slettMøteHelt(id);
+                delete møter[id];
+                renderMøteListe();
+            } catch(e) { alert('Error: ' + e.message); }
         };
 
         window.kopierLink = link => {
@@ -1406,6 +1513,13 @@
                     return;
                 }
                 const møte = snap.data();
+                if (møte.slettetTid) {
+                    // Møtet ligger i arrangørens papirkurv — ikke la deltakere stemme
+                    document.getElementById('deltakerMøteTitle').textContent = 'This meeting is no longer available';
+                    document.getElementById('deltakerMøteBeskrivelse').textContent = '';
+                    document.getElementById('navneKort').style.display = 'none';
+                    return;
+                }
                 participantMøte = møte;
                 document.getElementById('deltakerMøteTitle').textContent = møte.tittel || '';
                 document.getElementById('deltakerMøteBeskrivelse').textContent = møte.beskrivelse || '';
